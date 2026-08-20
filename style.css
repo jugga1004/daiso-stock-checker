@@ -42,6 +42,34 @@ body {
   font-size: 0.85rem;
 }
 
+.mode-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.mode-tab {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.mode-tab:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.mode-tab[aria-selected="true"] {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
 main {
   max-width: 480px;
   margin: 0 auto;
@@ -216,6 +244,63 @@ button.secondary {
 
 .badge--soldout {
   background: #eee;
+  color: var(--color-text-muted);
+}
+
+/* 매장 검색 결과 카드 (매장으로 찾기: 1단계) */
+.store-card {
+  display: block;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.store-card:hover {
+  border-color: var(--color-primary);
+}
+
+.store-card__name {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.store-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+/* 상품 재고 상태 배지 (매장으로 찾기: 2단계) */
+.stock-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.stock-badge--in {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.stock-badge--out,
+.stock-badge--unknown {
+  background: #eee;
+  color: var(--color-text-muted);
+}
+
+.stock-badge--pending {
+  background: var(--color-bg);
   color: var(--color-text-muted);
 }
 

@@ -4,16 +4,20 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
 <title>다이소 재고 확인</title>
-<link rel="stylesheet" href="style.css?v=3" />
+<link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
   <header class="app-header">
     <h1>다이소 재고 확인</h1>
     <p class="app-header__sub">근처 다이소 매장의 상품 재고를 확인해보세요</p>
+    <div id="modeTabs" class="mode-tabs" role="tablist">
+      <button type="button" class="mode-tab" data-mode="product" role="tab" aria-selected="true">상품으로 찾기</button>
+      <button type="button" class="mode-tab" data-mode="store" role="tab" aria-selected="false">매장으로 찾기</button>
+    </div>
   </header>
 
   <main>
-    <!-- 검색 화면 -->
+    <!-- 검색 화면 (상품으로 찾기: 1단계) -->
     <section id="view-search">
       <form id="searchForm" class="search-form">
         <input
@@ -32,7 +36,7 @@
       <ul id="searchResults" class="product-list"></ul>
     </section>
 
-    <!-- 상품 상세 / 재고 화면 -->
+    <!-- 상품 상세 / 재고 화면 (상품으로 찾기: 2단계) -->
     <section id="view-product" hidden>
       <button id="backButton" type="button" class="back-button">← 검색으로 돌아가기</button>
 
@@ -57,6 +61,48 @@
       <div id="inventorySummary" class="inventory-summary" hidden></div>
       <ul id="storeList" class="store-list"></ul>
     </section>
+
+    <!-- 매장 검색 (매장으로 찾기: 1단계) -->
+    <section id="view-store-search" hidden>
+      <form id="storeSearchForm" class="search-form">
+        <input
+          id="storeSearchInput"
+          type="search"
+          placeholder="매장명 또는 지역명을 입력하세요 (예: 강남역)"
+          autocomplete="off"
+          required
+        />
+        <button type="submit">매장 찾기</button>
+      </form>
+
+      <div id="storeSearchErrorBox" class="error-box" hidden></div>
+      <div id="storeSearchLoading" class="loading" hidden>매장 검색 중...</div>
+      <ul id="storeSearchResults" class="product-list"></ul>
+    </section>
+
+    <!-- 선택한 매장의 상품 재고 확인 (매장으로 찾기: 2단계) -->
+    <section id="view-store-products" hidden>
+      <button id="backToStoreSearchButton" type="button" class="back-button">← 매장 검색으로 돌아가기</button>
+
+      <div id="storeProductHeader" class="product-header"></div>
+
+      <form id="storeProductForm" class="search-form">
+        <input
+          id="storeProductInput"
+          type="search"
+          placeholder="이 매장에서 찾을 상품 키워드 (예: 수납, 다이어리)"
+          autocomplete="off"
+          required
+        />
+        <button type="submit">검색</button>
+      </form>
+      <p class="manual-location-hint">* 상품마다 이 매장 기준으로 재고를 하나씩 확인하는 방식이라 결과가 나오는 데 몇 초 걸릴 수 있습니다.</p>
+
+      <div id="storeProductErrorBox" class="error-box" hidden></div>
+      <div id="storeProductLoading" class="loading" hidden>상품 검색 중...</div>
+
+      <ul id="storeProductResults" class="product-list"></ul>
+    </section>
   </main>
 
   <footer class="app-footer">
@@ -68,6 +114,6 @@
     </p>
   </footer>
 
-  <script src="app.js?v=3" defer></script>
+  <script src="app.js?v=4" defer></script>
 </body>
 </html>

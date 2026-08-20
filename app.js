@@ -68,6 +68,23 @@
           storeCode: params.storeCode,
         });
       },
+
+      // "매장으로 찾기" 탭에서 매장을 먼저 고를 때 씀. /stores 응답에는 storeCode가
+      // 없어서(직접 확인함), 이후 재고 조회 결과와는 매장명(name)으로 매칭한다.
+      searchStores: function (keyword) {
+        return apiGet("/daiso/stores", { keyword: keyword, limit: 20 }).then(function (data) {
+          return (data.stores || []).map(function (s) {
+            return {
+              name: s.name,
+              address: s.address,
+              phone: s.phone || null,
+              hoursText: s.openTime && s.closeTime ? s.openTime + " - " + s.closeTime : null,
+              lat: s.lat,
+              lng: s.lng,
+            };
+          });
+        });
+      },
     },
   };
 
@@ -76,11 +93,14 @@
   // ---------------------------------------------------------------------
   var state = {
     brand: "daiso",
+    mode: "product", // 'product'(상품으로 찾기) | 'store'(매장으로 찾기)
     screen: "search",
     searchResults: [],
     selectedProduct: null,
     inventoryData: null,
     displayLocationCache: {}, // storeCode -> API 응답 캐시
+    storeSearchResults: [],
+    selectedStore: null,
   };
 
   function currentBrand() {
@@ -91,8 +111,11 @@
   // DOM 참조
   // ---------------------------------------------------------------------
   var el = {
+    modeTabs: document.getElementById("modeTabs"),
     viewSearch: document.getElementById("view-search"),
     viewProduct: document.getElementById("view-product"),
+    viewStoreSearch: document.getElementById("view-store-search"),
+    viewStoreProducts: document.getElementById("view-store-products"),
     searchForm: document.getElementById("searchForm"),
     searchInput: document.getElementById("searchInput"),
     searchErrorBox: document.getElementById("searchErrorBox"),
@@ -108,6 +131,18 @@
     inventoryErrorBox: document.getElementById("inventoryErrorBox"),
     inventorySummary: document.getElementById("inventorySummary"),
     storeList: document.getElementById("storeList"),
+    storeSearchForm: document.getElementById("storeSearchForm"),
+    storeSearchInput: document.getElementById("storeSearchInput"),
+    storeSearchErrorBox: document.getElementById("storeSearchErrorBox"),
+    storeSearchLoading: document.getElementById("storeSearchLoading"),
+    storeSearchResults: document.getElementById("storeSearchResults"),
+    backToStoreSearchButton: document.getElementById("backToStoreSearchButton"),
+    storeProductHeader: document.getElementById("storeProductHeader"),
+    storeProductForm: document.getElementById("storeProductForm"),
+    storeProductInput: document.getElementById("storeProductInput"),
+    storeProductErrorBox: document.getElementById("storeProductErrorBox"),
+    storeProductLoading: document.getElementById("storeProductLoading"),
+    storeProductResults: document.getElementById("storeProductResults"),
   };
 
   // ---------------------------------------------------------------------
@@ -250,13 +285,32 @@
   }
 
   // ---------------------------------------------------------------------
-  // 화면 전환
+  // 화면 전환 / 모드 탭
   // ---------------------------------------------------------------------
   function navigateTo(screen) {
     state.screen = screen;
     setHidden(el.viewSearch, screen !== "search");
     setHidden(el.viewProduct, screen !== "product");
+    setHidden(el.viewStoreSearch, screen !== "store-search");
+    setHidden(el.viewStoreProducts, screen !== "store-products");
   }
+
+  function setMode(mode) {
+    if (state.mode === mode) return;
+    state.mode = mode;
+
+    Array.prototype.forEach.call(el.modeTabs.querySelectorAll(".mode-tab"), function (tab) {
+      tab.setAttribute("aria-selected", String(tab.dataset.mode === mode));
+    });
+
+    navigateTo(mode === "product" ? "search" : "store-search");
+  }
+
+  el.modeTabs.addEventListener("click", function (e) {
+    var tab = e.target.closest(".mode-tab");
+    if (!tab) return;
+    setMode(tab.dataset.mode);
+  });
 
   // ---------------------------------------------------------------------
   // 검색 화면
@@ -584,5 +638,228 @@
 
   el.backButton.addEventListener("click", function () {
     navigateTo("search");
+  });
+
+  // ---------------------------------------------------------------------
+  // 매장으로 찾기 (매장을 먼저 고르고, 그 매장에 있는 상품을 찾는 흐름)
+  // ---------------------------------------------------------------------
+  // API에 "특정 매장의 전체 상품 목록"을 주는 기능이 없어서(직접 확인함), 키워드로
+  // 상품을 검색한 뒤 상품 하나하나를 선택된 매장 좌표 기준으로 재고 조회해서
+  // "이 매장에 있는지"를 우회적으로 확인한다. 상품 수만큼 API 호출이 늘어나므로
+  // 후보를 STORE_PRODUCT_LIMIT개로 제한하고, 동시 요청 수도 제한한다.
+  var STORE_PRODUCT_LIMIT = 12;
+  var STORE_PRODUCT_CONCURRENCY = 4;
+
+  function runWithConcurrency(items, limit, worker) {
+    var results = new Array(items.length);
+    var nextIndex = 0;
+
+    function runNext() {
+      var i = nextIndex++;
+      if (i >= items.length) return Promise.resolve();
+      return worker(items[i], i).then(function (r) {
+        results[i] = r;
+        return runNext();
+      });
+    }
+
+    var starters = [];
+    for (var k = 0; k < Math.min(limit, items.length); k++) starters.push(runNext());
+    return Promise.all(starters).then(function () {
+      return results;
+    });
+  }
+
+  function renderStoreSearchResults(stores) {
+    if (!stores || stores.length === 0) {
+      el.storeSearchResults.innerHTML =
+        '<li class="empty-state">검색 결과가 없습니다. 다른 검색어로 시도해보세요.</li>';
+      return;
+    }
+
+    el.storeSearchResults.innerHTML = stores
+      .map(function (s, index) {
+        var metaParts = [esc(s.address)];
+        if (s.hoursText) metaParts.push(esc(s.hoursText));
+        return (
+          '<li class="store-card" data-index="' + index + '" role="button" tabindex="0">' +
+          '<p class="store-card__name">' + esc(s.name) + "</p>" +
+          '<p class="store-card__meta">' +
+          metaParts.map(function (part) { return "<span>" + part + "</span>"; }).join("") +
+          "</p>" +
+          "</li>"
+        );
+      })
+      .join("");
+  }
+
+  function runStoreSearch(keyword) {
+    clearInlineError(el.storeSearchErrorBox);
+    el.storeSearchResults.innerHTML = "";
+    el.storeSearchLoading.hidden = false;
+
+    return withRetry(function () {
+      return currentBrand().searchStores(keyword);
+    })
+      .then(function (stores) {
+        state.storeSearchResults = stores;
+        renderStoreSearchResults(stores);
+      })
+      .catch(function (err) {
+        renderInlineError(el.storeSearchErrorBox, mapError(err), function () {
+          runStoreSearch(keyword);
+        });
+      })
+      .finally(function () {
+        el.storeSearchLoading.hidden = true;
+      });
+  }
+
+  el.storeSearchForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var keyword = el.storeSearchInput.value.trim();
+    if (!keyword) return;
+    runStoreSearch(keyword);
+  });
+
+  function selectStoreFromList(index) {
+    var store = state.storeSearchResults[index];
+    if (!store) return;
+    state.selectedStore = store;
+
+    navigateTo("store-products");
+    renderStoreProductHeader(store);
+    el.storeProductInput.value = "";
+    el.storeProductResults.innerHTML = "";
+    clearInlineError(el.storeProductErrorBox);
+    el.storeProductInput.focus();
+  }
+
+  el.storeSearchResults.addEventListener("click", function (e) {
+    var card = e.target.closest(".store-card");
+    if (!card) return;
+    selectStoreFromList(Number(card.dataset.index));
+  });
+
+  el.storeSearchResults.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var card = e.target.closest(".store-card");
+    if (!card) return;
+    e.preventDefault();
+    selectStoreFromList(Number(card.dataset.index));
+  });
+
+  function renderStoreProductHeader(store) {
+    var metaParts = [esc(store.address)];
+    if (store.hoursText) metaParts.push(esc(store.hoursText));
+    el.storeProductHeader.innerHTML =
+      '<div class="product-header__placeholder">🏬</div>' +
+      "<div>" +
+      '<p class="product-header__name">' + esc(store.name) + "</p>" +
+      '<p class="product-header__meta">' + metaParts.join(" · ") + "</p>" +
+      "</div>";
+  }
+
+  el.backToStoreSearchButton.addEventListener("click", function () {
+    navigateTo("store-search");
+  });
+
+  function renderStoreProductSkeleton(products) {
+    el.storeProductResults.innerHTML = products
+      .map(function (p) {
+        var thumb = p.imageUrl
+          ? '<img src="' + esc(p.imageUrl) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'" />'
+          : '<div class="product-card__placeholder">🏪</div>';
+        return (
+          '<li class="product-card" data-product-id="' + esc(p.id) + '">' +
+          thumb +
+          '<div class="product-card__info">' +
+          '<p class="product-card__name">' + esc(p.name) + "</p>" +
+          '<p class="product-card__price">' + esc(formatPrice(p.price)) +
+          '<span class="stock-badge stock-badge--pending">확인 중...</span></p>' +
+          "</div>" +
+          "</li>"
+        );
+      })
+      .join("");
+  }
+
+  function updateStoreProductBadge(productId, result) {
+    var row = el.storeProductResults.querySelector('.product-card[data-product-id="' + CSS.escape(productId) + '"]');
+    if (!row) return;
+    var badge = row.querySelector(".stock-badge");
+    if (!badge) return;
+
+    if (result.status === "in") {
+      badge.className = "stock-badge stock-badge--in";
+      badge.textContent = "재고 " + result.quantity + "개";
+    } else if (result.status === "out") {
+      badge.className = "stock-badge stock-badge--out";
+      badge.textContent = "재고 없음";
+    } else {
+      // 'unknown'(이 매장이 재고 추적 대상에 없음) / 'error'(조회 실패) 모두
+      // "확인 불가"로 통일 — 사용자 입장에선 원인 구분보다 결과가 중요.
+      badge.className = "stock-badge stock-badge--unknown";
+      badge.textContent = "확인 불가";
+    }
+  }
+
+  function checkProductAtStore(product, store) {
+    return withRetry(function () {
+      return currentBrand().fetchInventory({ productId: product.id, lat: store.lat, lng: store.lng });
+    })
+      .then(function (data) {
+        var match = (data.stores || []).find(function (s) { return s.name === store.name; });
+        if (!match) return { status: "unknown" };
+        return match.quantity > 0 ? { status: "in", quantity: match.quantity } : { status: "out" };
+      })
+      .catch(function () {
+        return { status: "error" };
+      });
+  }
+
+  function runStoreProductSearch(keyword) {
+    clearInlineError(el.storeProductErrorBox);
+    el.storeProductResults.innerHTML = "";
+    el.storeProductLoading.hidden = false;
+    var store = state.selectedStore;
+
+    return withRetry(function () {
+      return currentBrand().searchProducts(keyword);
+    })
+      .then(function (products) {
+        products = products.slice(0, STORE_PRODUCT_LIMIT);
+        if (products.length === 0) {
+          el.storeProductResults.innerHTML =
+            '<li class="empty-state">검색 결과가 없습니다. 다른 검색어로 시도해보세요.</li>';
+          return;
+        }
+
+        renderStoreProductSkeleton(products);
+
+        // 목록은 이미 그려졌으니 재고 확인은 백그라운드로 진행 — 화면 전체 로딩과
+        // 별개로 각 상품 배지가 알아서 채워진다(진열 위치 자동조회와 같은 방식).
+        runWithConcurrency(products, STORE_PRODUCT_CONCURRENCY, function (product) {
+          return checkProductAtStore(product, store).then(function (result) {
+            updateStoreProductBadge(product.id, result);
+            return result;
+          });
+        });
+      })
+      .catch(function (err) {
+        renderInlineError(el.storeProductErrorBox, mapError(err), function () {
+          runStoreProductSearch(keyword);
+        });
+      })
+      .finally(function () {
+        el.storeProductLoading.hidden = true;
+      });
+  }
+
+  el.storeProductForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var keyword = el.storeProductInput.value.trim();
+    if (!keyword) return;
+    runStoreProductSearch(keyword);
   });
 })();
