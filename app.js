@@ -101,6 +101,7 @@
     displayLocationCache: {}, // storeCode -> API 응답 캐시
     storeSearchResults: [],
     selectedStore: null,
+    storeProductLocationCache: {}, // "productId|storeCode" -> API 응답 캐시
   };
 
   function currentBrand() {
@@ -777,6 +778,7 @@
           '<p class="product-card__name">' + esc(p.name) + "</p>" +
           '<p class="product-card__price">' + esc(formatPrice(p.price)) +
           '<span class="stock-badge stock-badge--pending">확인 중...</span></p>' +
+          '<div class="product-card__location" hidden></div>' +
           "</div>" +
           "</li>"
         );
@@ -793,6 +795,11 @@
     if (result.status === "in") {
       badge.className = "stock-badge stock-badge--in";
       badge.textContent = "재고 " + result.quantity + "개";
+      var locBox = row.querySelector(".product-card__location");
+      if (locBox && result.storeCode && currentBrand().fetchDisplayLocation) {
+        locBox.hidden = false;
+        loadStoreProductLocation(productId, result.storeCode, locBox);
+      }
     } else if (result.status === "out") {
       badge.className = "stock-badge stock-badge--out";
       badge.textContent = "재고 없음";
@@ -802,6 +809,41 @@
       badge.className = "stock-badge stock-badge--unknown";
       badge.textContent = "확인 불가";
     }
+  }
+
+  // 상품으로 찾기 탭의 loadDisplayLocation()과 달리, 여기서는 매장 하나에 여러
+  // 상품을 대조하므로 캐시 키에 상품ID까지 포함해야 한다(storeCode만 쓰면 서로 다른
+  // 상품인데 같은 매장이라 캐시가 뒤섞인다).
+  function loadStoreProductLocation(productId, storeCode, box) {
+    var cacheKey = productId + "|" + storeCode;
+    var cached = state.storeProductLocationCache[cacheKey];
+    if (cached) {
+      box.innerHTML = cached;
+      return;
+    }
+
+    box.textContent = "위치 확인 중...";
+
+    withRetry(function () {
+      return currentBrand().fetchDisplayLocation({ productId: productId, storeCode: storeCode });
+    })
+      .then(function (loc) {
+        var html;
+        if (loc.hasLocation && loc.locations && loc.locations.length > 0) {
+          html = loc.locations
+            .map(function (l) {
+              return "<p>구역 " + esc(l.zoneNo) + " · " + esc(l.stairNo) + "층</p>";
+            })
+            .join("");
+        } else {
+          html = '<p class="muted">' + esc(loc.message || "진열 위치 정보가 없습니다.") + "</p>";
+        }
+        state.storeProductLocationCache[cacheKey] = html;
+        box.innerHTML = html;
+      })
+      .catch(function () {
+        box.innerHTML = '<p class="muted">위치 정보를 불러오지 못했습니다.</p>';
+      });
   }
 
   function checkProductAtStore(product, store) {
@@ -814,7 +856,9 @@
       .then(function (data) {
         var match = (data.stores || []).find(function (s) { return s.name === store.name; });
         if (!match) return { status: "unknown" };
-        return match.quantity > 0 ? { status: "in", quantity: match.quantity } : { status: "out" };
+        return match.quantity > 0
+          ? { status: "in", quantity: match.quantity, storeCode: match.storeCode }
+          : { status: "out" };
       })
       .catch(function () {
         return { status: "error" };

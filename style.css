@@ -247,6 +247,23 @@ button.secondary {
   color: var(--color-text-muted);
 }
 
+.product-card__location {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--color-border);
+  font-size: 0.8rem;
+  color: var(--color-text);
+}
+
+.product-card__location .muted {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.product-card__location p {
+  margin: 0;
+}
+
 /* 매장 검색 결과 카드 (매장으로 찾기: 1단계) */
 .store-card {
   display: block;
