@@ -4,7 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
 <title>다이소 재고 확인</title>
-<link rel="stylesheet" href="style.css?v=6" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#d6336c" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="다이소재고" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="app-header">
@@ -114,6 +122,24 @@
     </p>
   </footer>
 
-  <script src="app.js?v=6" defer></script>
+  <script src="app.js" defer></script>
+  <script>
+    // 오프라인 캐싱을 위한 서비스워커 등록. 새 버전이 활성화되면(=배포 시 sw.js의
+    // CACHE_NAME을 올렸을 때) 한 번 자동 새로고침해서 최신 화면으로 바꿔준다 —
+    // 그동안 겪었던 "예전 캐시가 계속 보이는" 문제를 서비스워커 레벨에서 해결.
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("sw.js").catch(function (err) {
+          console.error("[재고확인] 서비스워커 등록 실패:", err);
+        });
+      });
+      var reloadedForUpdate = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (reloadedForUpdate) return;
+        reloadedForUpdate = true;
+        window.location.reload();
+      });
+    }
+  </script>
 </body>
 </html>

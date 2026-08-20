@@ -1,0 +1,14 @@
+{
+  "name": "다이소 재고 확인",
+  "short_name": "다이소재고",
+  "description": "근처 다이소 매장의 상품 재고를 확인하는 개인용 도구",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f8",
+  "theme_color": "#d6336c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
