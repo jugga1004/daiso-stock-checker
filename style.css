@@ -366,6 +366,11 @@ button.secondary {
   margin: 0;
 }
 
+.loc-retry {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
 .app-footer {
   max-width: 480px;
   margin: 0 auto;

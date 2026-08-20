@@ -487,6 +487,56 @@
     }
 
     el.storeList.innerHTML = stores.map(renderStoreRow).join("");
+    autoLoadDisplayLocations(stores);
+  }
+
+  // 매장을 클릭하지 않아도 진열 위치(구역/층)가 바로 보이도록, 재고가 있는 매장에 한해
+  // 목록을 그리자마자 각자 알아서 조회한다(품절 매장은 어차피 갈 이유가 없어 생략).
+  function autoLoadDisplayLocations(stores) {
+    if (!currentBrand().fetchDisplayLocation) return;
+
+    stores.forEach(function (store) {
+      if (!(store.quantity > 0)) return;
+      var box = el.storeList.querySelector(
+        '.store-row[data-store-code="' + CSS.escape(store.storeCode) + '"] .store-row__location'
+      );
+      if (!box) return;
+      loadDisplayLocation(store.storeCode, box);
+    });
+  }
+
+  function loadDisplayLocation(storeCode, box) {
+    var cached = state.displayLocationCache[storeCode];
+    if (cached) {
+      box.innerHTML = cached;
+      return;
+    }
+
+    box.textContent = "위치 확인 중...";
+
+    withRetry(function () {
+      return currentBrand().fetchDisplayLocation({
+        productId: state.selectedProduct.id,
+        storeCode: storeCode,
+      });
+    })
+      .then(function (loc) {
+        var html;
+        if (loc.hasLocation && loc.locations && loc.locations.length > 0) {
+          html = loc.locations
+            .map(function (l) {
+              return "<p>구역 " + esc(l.zoneNo) + " · " + esc(l.stairNo) + "층</p>";
+            })
+            .join("");
+        } else {
+          html = '<p class="muted">' + esc(loc.message || "진열 위치 정보가 없습니다.") + "</p>";
+        }
+        state.displayLocationCache[storeCode] = html;
+        box.innerHTML = html;
+      })
+      .catch(function () {
+        box.innerHTML = '<p class="muted">위치 정보를 불러오지 못했습니다. <a href="#" class="loc-retry">다시 시도</a></p>';
+      });
   }
 
   function renderStoreRow(store) {
@@ -515,64 +565,21 @@
       (store.phone
         ? '<a class="store-row__tel" href="tel:' + esc(store.phone) + '">전화하기</a>'
         : "") +
-      (canExpand ? '<div class="store-row__location" hidden></div>' : "") +
+      (canExpand && !soldOut ? '<div class="store-row__location">위치 확인 중...</div>' : "") +
       "</li>"
     );
   }
 
+  // 자동 조회가 실패했을 때만 쓰는 수동 재시도 링크
   el.storeList.addEventListener("click", function (e) {
-    if (!currentBrand().fetchDisplayLocation) return; // 진열 위치 조회를 지원하지 않는 브랜드
-    if (e.target.closest(".store-row__tel")) return; // 전화 링크는 그대로 통과
-    var row = e.target.closest(".store-row");
-    if (!row) return;
-
-    var box = row.querySelector(".store-row__location");
-    if (!box) return;
-
-    // dataset.locState: 'open'이면 다음 클릭은 접기. 그 외('closed'/'error'/undefined)는
-    // 열면서 필요 시 재조회 — hidden 속성만으로는 "에러 후 재시도"를 표현할 수 없어 별도 상태로 관리.
-    if (row.dataset.locState === "open") {
-      box.hidden = true;
-      row.dataset.locState = "closed";
-      return;
-    }
-
-    var storeCode = row.dataset.storeCode;
-    var cached = state.displayLocationCache[storeCode];
-    box.hidden = false;
-    row.dataset.locState = "open";
-
-    if (cached) {
-      box.innerHTML = cached;
-      return;
-    }
-
-    box.textContent = "진열 위치 조회 중...";
-
-    withRetry(function () {
-      return currentBrand().fetchDisplayLocation({
-        productId: state.selectedProduct.id,
-        storeCode: storeCode,
-      });
-    })
-      .then(function (loc) {
-        var html;
-        if (loc.hasLocation && loc.locations && loc.locations.length > 0) {
-          html = loc.locations
-            .map(function (l) {
-              return "<p>구역 " + esc(l.zoneNo) + " · " + esc(l.stairNo) + "층</p>";
-            })
-            .join("");
-        } else {
-          html = '<p class="muted">' + esc(loc.message || "진열 위치 정보가 없습니다.") + "</p>";
-        }
-        state.displayLocationCache[storeCode] = html;
-        box.innerHTML = html;
-      })
-      .catch(function () {
-        box.textContent = "진열 위치를 불러오지 못했습니다. 다시 눌러 재시도해주세요.";
-        row.dataset.locState = "error"; // 다음 클릭에서 다시 조회 시도
-      });
+    var retryLink = e.target.closest(".loc-retry");
+    if (!retryLink) return;
+    e.preventDefault();
+    var row = retryLink.closest(".store-row");
+    var box = retryLink.closest(".store-row__location");
+    if (!row || !box) return;
+    delete state.displayLocationCache[row.dataset.storeCode];
+    loadDisplayLocation(row.dataset.storeCode, box);
   });
 
   el.backButton.addEventListener("click", function () {
