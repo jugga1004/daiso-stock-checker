@@ -113,9 +113,11 @@
   function loadFavoriteStores() {
     try {
       var raw = localStorage.getItem(FAVORITE_STORES_KEY);
+      console.log("[재고확인] 즐겨찾기 불러오기:", raw);
       var parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
+      console.error("[재고확인] 즐겨찾기 불러오기 실패:", e);
       return [];
     }
   }
@@ -123,8 +125,10 @@
   function persistFavoriteStores() {
     try {
       localStorage.setItem(FAVORITE_STORES_KEY, JSON.stringify(state.favoriteStores));
+      console.log("[재고확인] 즐겨찾기 저장함:", localStorage.getItem(FAVORITE_STORES_KEY));
     } catch (e) {
       // localStorage를 못 쓰는 환경(프라이빗 모드 등)이면 그냥 이번 세션 동안만 기억한다.
+      console.error("[재고확인] 즐겨찾기 저장 실패:", e);
     }
   }
 
