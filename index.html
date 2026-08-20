@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>다이소 재고 확인</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>다이소 재고 확인</h1>
+    <p class="app-header__sub">근처 다이소 매장의 상품 재고를 확인해보세요</p>
+  </header>
+
+  <main>
+    <!-- 검색 화면 -->
+    <section id="view-search">
+      <form id="searchForm" class="search-form">
+        <input
+          id="searchInput"
+          type="search"
+          name="q"
+          placeholder="상품명을 입력하세요 (예: 수납박스)"
+          autocomplete="off"
+          required
+        />
+        <button type="submit">검색</button>
+      </form>
+
+      <div id="searchErrorBox" class="error-box" hidden></div>
+      <div id="searchLoading" class="loading" hidden>검색 중...</div>
+      <ul id="searchResults" class="product-list"></ul>
+    </section>
+
+    <!-- 상품 상세 / 재고 화면 -->
+    <section id="view-product" hidden>
+      <button id="backButton" type="button" class="back-button">← 검색으로 돌아가기</button>
+
+      <div id="productHeader" class="product-header"></div>
+
+      <div id="locationStatus" class="location-status"></div>
+
+      <form id="manualLocationForm" class="manual-location-form" hidden>
+        <input
+          id="manualLocationInput"
+          type="text"
+          placeholder="지역명 또는 매장명 (예: 강남역)"
+          autocomplete="off"
+        />
+        <button type="submit">매장 찾기</button>
+      </form>
+      <p id="manualLocationHint" class="manual-location-hint" hidden></p>
+
+      <div id="inventoryLoading" class="loading" hidden>매장 재고 조회 중...</div>
+      <div id="inventoryErrorBox" class="error-box" hidden></div>
+
+      <div id="inventorySummary" class="inventory-summary" hidden></div>
+      <ul id="storeList" class="store-list"></ul>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>
+      이 사이트는 다이소 공식 서비스가 아니며, 비공식 오픈소스 프로젝트
+      <a href="https://github.com/hmmhmmhm/daiso-mcp" target="_blank" rel="noopener noreferrer">daiso-mcp</a>
+      (MIT License)의 공개 API를 이용합니다. 서비스가 예고 없이 중단되거나
+      실제 매장 재고와 다를 수 있습니다.
+    </p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
