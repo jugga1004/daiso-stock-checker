@@ -789,6 +789,15 @@
   function updateStoreProductBadge(productId, result) {
     var row = el.storeProductResults.querySelector('.product-card[data-product-id="' + CSS.escape(productId) + '"]');
     if (!row) return;
+
+    // 이 매장에 확실히 없는 상품은 목록에서 빼서 실제로 찾을 수 있는 것만 보여준다
+    // ("확인 불가"는 없다고 확정된 게 아니라서 그대로 남겨둔다).
+    if (result.status === "out") {
+      row.hidden = true;
+      hideEmptyStoreProductsIfDone();
+      return;
+    }
+
     var badge = row.querySelector(".stock-badge");
     if (!badge) return;
 
@@ -800,14 +809,27 @@
         locBox.hidden = false;
         loadStoreProductLocation(productId, result.storeCode, locBox);
       }
-    } else if (result.status === "out") {
-      badge.className = "stock-badge stock-badge--out";
-      badge.textContent = "재고 없음";
     } else {
       // 'unknown'(이 매장이 재고 추적 대상에 없음) / 'error'(조회 실패) 모두
       // "확인 불가"로 통일 — 사용자 입장에선 원인 구분보다 결과가 중요.
       badge.className = "stock-badge stock-badge--unknown";
       badge.textContent = "확인 불가";
+    }
+  }
+
+  // 결과가 하나둘씩 비동기로 들어오다 보니, 전부 "재고 없음"으로 밝혀져 목록이
+  // 통째로 숨겨질 수도 있다 — 그 경우엔 빈 화면 대신 안내 문구를 보여준다.
+  function hideEmptyStoreProductsIfDone() {
+    var rows = el.storeProductResults.querySelectorAll(".product-card");
+    var anyVisible = Array.prototype.some.call(rows, function (row) {
+      return !row.hidden;
+    });
+    var alreadyShown = el.storeProductResults.querySelector("[data-out-of-stock-notice]");
+    if (!anyVisible && rows.length > 0 && !alreadyShown) {
+      el.storeProductResults.insertAdjacentHTML(
+        "beforeend",
+        '<li class="empty-state" data-out-of-stock-notice>검색된 상품이 모두 이 매장에 재고가 없습니다.</li>'
+      );
     }
   }
 
