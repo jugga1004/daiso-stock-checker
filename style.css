@@ -299,6 +299,43 @@ button.secondary {
   margin: 0;
 }
 
+.store-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+}
+
+.store-card__top .store-card__name {
+  margin: 0;
+}
+
+.star-toggle {
+  background: none;
+  border: none;
+  flex-shrink: 0;
+  padding: 2px 4px;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.star-toggle:hover {
+  background: none;
+}
+
+.star-toggle--active {
+  color: #f5a623;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  margin: 0 0 8px;
+  color: var(--color-text);
+}
+
 /* 상품 재고 상태 배지 (매장으로 찾기: 2단계) */
 .stock-badge {
   display: inline-block;
@@ -336,6 +373,11 @@ button.secondary {
   border-radius: var(--radius);
   padding: 14px;
   margin-bottom: var(--gap);
+}
+
+.product-header__info {
+  flex: 1;
+  min-width: 0;
 }
 
 .product-header img {

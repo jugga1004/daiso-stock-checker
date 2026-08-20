@@ -102,7 +102,53 @@
     storeSearchResults: [],
     selectedStore: null,
     storeProductLocationCache: {}, // "productId|storeCode" -> API 응답 캐시
+    favoriteStores: loadFavoriteStores(), // localStorage에 저장되는 즐겨찾는 매장 목록
   };
+
+  // ---------------------------------------------------------------------
+  // 즐겨찾는 매장 (localStorage에 로컬 저장 — 서버로 전송하지 않음)
+  // ---------------------------------------------------------------------
+  var FAVORITE_STORES_KEY = "daiso-stock-checker:favoriteStores";
+
+  function loadFavoriteStores() {
+    try {
+      var raw = localStorage.getItem(FAVORITE_STORES_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function persistFavoriteStores() {
+    try {
+      localStorage.setItem(FAVORITE_STORES_KEY, JSON.stringify(state.favoriteStores));
+    } catch (e) {
+      // localStorage를 못 쓰는 환경(프라이빗 모드 등)이면 그냥 이번 세션 동안만 기억한다.
+    }
+  }
+
+  function isFavoriteStore(name) {
+    return state.favoriteStores.some(function (s) { return s.name === name; });
+  }
+
+  function toggleFavoriteStore(store) {
+    var index = state.favoriteStores.findIndex(function (s) { return s.name === store.name; });
+    if (index >= 0) {
+      state.favoriteStores.splice(index, 1);
+    } else {
+      state.favoriteStores.push({
+        name: store.name,
+        address: store.address,
+        phone: store.phone || null,
+        hoursText: store.hoursText || null,
+        lat: store.lat,
+        lng: store.lng,
+      });
+    }
+    persistFavoriteStores();
+    renderFavoriteStores();
+  }
 
   function currentBrand() {
     return BRANDS[state.brand];
@@ -132,6 +178,8 @@
     inventoryErrorBox: document.getElementById("inventoryErrorBox"),
     inventorySummary: document.getElementById("inventorySummary"),
     storeList: document.getElementById("storeList"),
+    favoriteStoresSection: document.getElementById("favoriteStoresSection"),
+    favoriteStoresList: document.getElementById("favoriteStoresList"),
     useMyLocationButton: document.getElementById("useMyLocationButton"),
     storeGeoStatus: document.getElementById("storeGeoStatus"),
     storeSearchForm: document.getElementById("storeSearchForm"),
@@ -307,6 +355,7 @@
     });
 
     navigateTo(mode === "product" ? "search" : "store-search");
+    if (mode === "store") renderFavoriteStores();
   }
 
   el.modeTabs.addEventListener("click", function (e) {
@@ -442,7 +491,7 @@
       : '<div class="product-header__placeholder">🏪</div>';
     el.productHeader.innerHTML =
       thumb +
-      "<div>" +
+      '<div class="product-header__info">' +
       '<p class="product-header__name">' + esc(product.name) + soldOutBadge + "</p>" +
       '<p class="product-header__meta">' + esc(formatPrice(product.price)) + "</p>" +
       "</div>";
@@ -462,11 +511,19 @@
 
     navigator.geolocation.getCurrentPosition(
       function (pos) {
-        el.locationStatus.textContent = "내 위치 기준 근처 매장을 조회합니다.";
-        fetchAndRenderInventory({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        });
+        // lat/lng를 그대로 /inventory에 넘기면 실제 거리와 무관하게 정해진 소수의
+        // "추적 매장"만 나오는 문제가 있어(매장으로 찾기 탭에서 확인한 것과 동일한
+        // 원인) — 매장으로 찾기의 "내 위치" 기능과 똑같이 좌표를 지역명으로 바꿔서
+        // keyword로 조회하는 방식으로 통일한다.
+        el.locationStatus.textContent = "내 위치 주변 지역을 확인하는 중...";
+        reverseGeocodeToAreaName(pos.coords.latitude, pos.coords.longitude)
+          .then(function (areaName) {
+            el.locationStatus.textContent = '"' + areaName + '" 근처 매장을 조회합니다.';
+            fetchAndRenderInventory({ keyword: areaName });
+          })
+          .catch(function () {
+            showManualLocationFallback("주변 지역을 확인하지 못했습니다. 지역명이나 매장명을 입력해주세요.");
+          });
       },
       function (err) {
         var message =
@@ -673,6 +730,26 @@
     });
   }
 
+  function renderStoreCard(store, extraAttr) {
+    var metaParts = [esc(store.address)];
+    if (store.hoursText) metaParts.push(esc(store.hoursText));
+    var fav = isFavoriteStore(store.name);
+    return (
+      '<li class="store-card" ' + extraAttr + ' role="button" tabindex="0">' +
+      '<div class="store-card__top">' +
+      '<p class="store-card__name">' + esc(store.name) + "</p>" +
+      '<button type="button" class="star-toggle' + (fav ? " star-toggle--active" : "") +
+      '" data-star-name="' + esc(store.name) + '" aria-label="즐겨찾기 토글">' +
+      (fav ? "★" : "☆") +
+      "</button>" +
+      "</div>" +
+      '<p class="store-card__meta">' +
+      metaParts.map(function (part) { return "<span>" + part + "</span>"; }).join("") +
+      "</p>" +
+      "</li>"
+    );
+  }
+
   function renderStoreSearchResults(stores) {
     if (!stores || stores.length === 0) {
       el.storeSearchResults.innerHTML =
@@ -682,18 +759,35 @@
 
     el.storeSearchResults.innerHTML = stores
       .map(function (s, index) {
-        var metaParts = [esc(s.address)];
-        if (s.hoursText) metaParts.push(esc(s.hoursText));
-        return (
-          '<li class="store-card" data-index="' + index + '" role="button" tabindex="0">' +
-          '<p class="store-card__name">' + esc(s.name) + "</p>" +
-          '<p class="store-card__meta">' +
-          metaParts.map(function (part) { return "<span>" + part + "</span>"; }).join("") +
-          "</p>" +
-          "</li>"
-        );
+        return renderStoreCard(s, 'data-index="' + index + '"');
       })
       .join("");
+  }
+
+  function renderFavoriteStores() {
+    var favs = state.favoriteStores;
+    if (!favs || favs.length === 0) {
+      setHidden(el.favoriteStoresSection, true);
+      el.favoriteStoresList.innerHTML = "";
+      return;
+    }
+    setHidden(el.favoriteStoresSection, false);
+    el.favoriteStoresList.innerHTML = favs
+      .map(function (s) {
+        return renderStoreCard(s, 'data-fav-name="' + esc(s.name) + '"');
+      })
+      .join("");
+  }
+
+  // 즐겨찾기 별 클릭은 카드 이동과 분리해서 처리한다 — 두 리스트(검색결과/즐겨찾기)에서
+  // 공통으로 쓴다.
+  function handleStarToggleClick(e, findStore) {
+    var star = e.target.closest(".star-toggle");
+    if (!star) return false;
+    e.stopPropagation();
+    var store = findStore(star.dataset.starName);
+    if (store) toggleFavoriteStore(store);
+    return true;
   }
 
   function runStoreSearch(keyword) {
@@ -790,8 +884,7 @@
 
   el.useMyLocationButton.addEventListener("click", useMyLocationForStoreSearch);
 
-  function selectStoreFromList(index) {
-    var store = state.storeSearchResults[index];
+  function selectStore(store) {
     if (!store) return;
     state.selectedStore = store;
 
@@ -804,31 +897,66 @@
   }
 
   el.storeSearchResults.addEventListener("click", function (e) {
+    if (handleStarToggleClick(e, function (name) {
+      return state.storeSearchResults.find(function (s) { return s.name === name; });
+    })) return;
     var card = e.target.closest(".store-card");
     if (!card) return;
-    selectStoreFromList(Number(card.dataset.index));
+    selectStore(state.storeSearchResults[Number(card.dataset.index)]);
   });
 
   el.storeSearchResults.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target.closest(".star-toggle")) return;
     var card = e.target.closest(".store-card");
     if (!card) return;
     e.preventDefault();
-    selectStoreFromList(Number(card.dataset.index));
+    selectStore(state.storeSearchResults[Number(card.dataset.index)]);
+  });
+
+  el.favoriteStoresList.addEventListener("click", function (e) {
+    if (handleStarToggleClick(e, function (name) {
+      return state.favoriteStores.find(function (s) { return s.name === name; });
+    })) return;
+    var card = e.target.closest(".store-card");
+    if (!card) return;
+    selectStore(state.favoriteStores.find(function (s) { return s.name === card.dataset.favName; }));
+  });
+
+  el.favoriteStoresList.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    if (e.target.closest(".star-toggle")) return;
+    var card = e.target.closest(".store-card");
+    if (!card) return;
+    e.preventDefault();
+    selectStore(state.favoriteStores.find(function (s) { return s.name === card.dataset.favName; }));
   });
 
   function renderStoreProductHeader(store) {
     var metaParts = [esc(store.address)];
     if (store.hoursText) metaParts.push(esc(store.hoursText));
+    var fav = isFavoriteStore(store.name);
     el.storeProductHeader.innerHTML =
       '<div class="product-header__placeholder">🏬</div>' +
-      "<div>" +
+      '<div class="product-header__info">' +
       '<p class="product-header__name">' + esc(store.name) + "</p>" +
       '<p class="product-header__meta">' + metaParts.join(" · ") + "</p>" +
-      "</div>";
+      "</div>" +
+      '<button type="button" class="star-toggle' + (fav ? " star-toggle--active" : "") +
+      '" id="storeProductFavToggle" aria-label="즐겨찾기 토글">' +
+      (fav ? "★" : "☆") +
+      "</button>";
   }
 
+  el.storeProductHeader.addEventListener("click", function (e) {
+    if (!e.target.closest("#storeProductFavToggle")) return;
+    if (!state.selectedStore) return;
+    toggleFavoriteStore(state.selectedStore);
+    renderStoreProductHeader(state.selectedStore); // 헤더의 별 아이콘 즉시 갱신
+  });
+
   el.backToStoreSearchButton.addEventListener("click", function () {
+    renderFavoriteStores();
     navigateTo("store-search");
   });
 
@@ -1026,4 +1154,6 @@
     if (!keyword) return;
     runStoreProductSearch(keyword);
   });
+
+  renderFavoriteStores();
 })();

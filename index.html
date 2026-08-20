@@ -72,6 +72,11 @@
 
     <!-- 매장 검색 (매장으로 찾기: 1단계) -->
     <section id="view-store-search" hidden>
+      <div id="favoriteStoresSection" hidden>
+        <h2 class="section-title">즐겨찾는 매장</h2>
+        <ul id="favoriteStoresList" class="product-list"></ul>
+      </div>
+
       <button id="useMyLocationButton" type="button" class="geo-button">📍 내 위치로 주변 매장 찾기</button>
       <p id="storeGeoStatus" class="location-status" hidden></p>
       <p class="manual-location-hint">* 내 위치 버튼을 쓰면 좌표를 지역명으로 바꾸는 데 BigDataCloud(무료 위치 조회 서비스)가 쓰이며, 저장되지 않습니다.</p>
