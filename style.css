@@ -76,6 +76,11 @@ main {
   padding: 0 16px 40px;
 }
 
+.geo-button {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
 /* 검색 폼 */
 .search-form {
   display: flex;

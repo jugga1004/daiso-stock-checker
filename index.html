@@ -72,6 +72,10 @@
 
     <!-- 매장 검색 (매장으로 찾기: 1단계) -->
     <section id="view-store-search" hidden>
+      <button id="useMyLocationButton" type="button" class="geo-button">📍 내 위치로 주변 매장 찾기</button>
+      <p id="storeGeoStatus" class="location-status" hidden></p>
+      <p class="manual-location-hint">* 내 위치 버튼을 쓰면 좌표를 지역명으로 바꾸는 데 BigDataCloud(무료 위치 조회 서비스)가 쓰이며, 저장되지 않습니다.</p>
+
       <form id="storeSearchForm" class="search-form">
         <input
           id="storeSearchInput"
@@ -117,7 +121,9 @@
     <p>
       이 사이트는 다이소 공식 서비스가 아니며, 비공식 오픈소스 프로젝트
       <a href="https://github.com/hmmhmmhm/daiso-mcp" target="_blank" rel="noopener noreferrer">daiso-mcp</a>
-      (MIT License)의 공개 API를 이용합니다. 서비스가 예고 없이 중단되거나
+      (MIT License)의 공개 API를 이용합니다. "내 위치로 주변 매장 찾기" 사용 시
+      좌표를 지역명으로 바꾸기 위해 <a href="https://www.bigdatacloud.com/" target="_blank" rel="noopener noreferrer">BigDataCloud</a>
+      역지오코딩 API로 좌표가 전송됩니다(저장되지 않음). 서비스가 예고 없이 중단되거나
       실제 매장 재고와 다를 수 있습니다.
     </p>
   </footer>

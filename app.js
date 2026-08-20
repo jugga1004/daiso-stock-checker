@@ -132,6 +132,8 @@
     inventoryErrorBox: document.getElementById("inventoryErrorBox"),
     inventorySummary: document.getElementById("inventorySummary"),
     storeList: document.getElementById("storeList"),
+    useMyLocationButton: document.getElementById("useMyLocationButton"),
+    storeGeoStatus: document.getElementById("storeGeoStatus"),
     storeSearchForm: document.getElementById("storeSearchForm"),
     storeSearchInput: document.getElementById("storeSearchInput"),
     storeSearchErrorBox: document.getElementById("storeSearchErrorBox"),
@@ -720,8 +722,73 @@
     e.preventDefault();
     var keyword = el.storeSearchInput.value.trim();
     if (!keyword) return;
+    setHidden(el.storeGeoStatus, true);
     runStoreSearch(keyword);
   });
+
+  // 다이소 /stores API는 좌표를 못 받는다(직접 확인함) — 그래서 좌표를 지역명으로
+  // 바꿔주는 무료·키 불필요 서비스(BigDataCloud)를 거쳐서, 그 지역명을 다이소
+  // 매장 검색 키워드로 대신 넣는 방식으로 우회한다.
+  function reverseGeocodeToAreaName(lat, lng) {
+    var url =
+      "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" +
+      lat + "&longitude=" + lng + "&localityLanguage=ko";
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, 8000);
+
+    return fetch(url, { signal: controller.signal })
+      .then(function (res) {
+        if (!res.ok) throw new Error("REVERSE_GEOCODE_FAILED");
+        return res.json();
+      })
+      .then(function (data) {
+        var name = (data.locality || data.city || data.principalSubdivision || "").trim();
+        if (!name) throw new Error("REVERSE_GEOCODE_EMPTY");
+        // BigDataCloud가 주는 "OO1동/OO2동" 같은 행정동 이름은 다이소 주소 표기(법정동)와
+        // 안 맞아 검색이 안 될 때가 많다(직접 확인함 — "논현1동"은 0건, "논현동"은 매칭됨).
+        // 끝의 숫자만 떼어내 법정동식 이름에 가깝게 맞춘다.
+        return name.replace(/\d+동$/, "동");
+      })
+      .finally(function () {
+        clearTimeout(timeoutId);
+      });
+  }
+
+  function useMyLocationForStoreSearch() {
+    clearInlineError(el.storeSearchErrorBox);
+    el.storeSearchResults.innerHTML = "";
+    setHidden(el.storeGeoStatus, false);
+    el.storeGeoStatus.textContent = "내 위치를 확인하는 중...";
+
+    if (!("geolocation" in navigator)) {
+      el.storeGeoStatus.textContent = "이 브라우저는 위치 정보를 지원하지 않습니다. 매장명이나 지역명을 입력해주세요.";
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        el.storeGeoStatus.textContent = "내 위치 주변 지역을 확인하는 중...";
+        reverseGeocodeToAreaName(pos.coords.latitude, pos.coords.longitude)
+          .then(function (areaName) {
+            el.storeSearchInput.value = areaName;
+            el.storeGeoStatus.textContent = '"' + areaName + '" 근처 매장을 찾습니다.';
+            runStoreSearch(areaName);
+          })
+          .catch(function () {
+            el.storeGeoStatus.textContent = "주변 지역을 확인하지 못했습니다. 매장명이나 지역명을 직접 입력해주세요.";
+          });
+      },
+      function (err) {
+        el.storeGeoStatus.textContent =
+          err.code === err.PERMISSION_DENIED
+            ? "위치 권한이 거부되었습니다. 매장명이나 지역명을 입력해주세요."
+            : "위치 정보를 가져오지 못했습니다. 매장명이나 지역명을 입력해주세요.";
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+    );
+  }
+
+  el.useMyLocationButton.addEventListener("click", useMyLocationForStoreSearch);
 
   function selectStoreFromList(index) {
     var store = state.storeSearchResults[index];
@@ -887,6 +954,30 @@
       });
   }
 
+  // 원래 순서는 검색어와의 텍스트 일치도 기준(다이소 API가 정렬해서 주는 순서)이다.
+  // 재고 확인이 다 끝난 뒤, 그 순서는 유지한 채로 재고 있는 상품만 수량이 많은
+  // 순으로 끌어올린다 — "확인 불가"(재고 정보 없음) 상품들은 원래 순서 그대로
+  // 맨 뒤에 남는다. Array.sort는 안정 정렬이라 동점(둘 다 확인 불가 등)일 때
+  // 원래 순서가 자연스럽게 보존된다.
+  function sortStoreProductResultsByStock(products, results) {
+    var order = products.map(function (product, index) {
+      var result = results[index] || { status: "unknown" };
+      var rank = result.status === "in" ? -result.quantity : Infinity;
+      return { id: product.id, rank: rank };
+    });
+
+    order.sort(function (a, b) {
+      return a.rank - b.rank;
+    });
+
+    order.forEach(function (item) {
+      var row = el.storeProductResults.querySelector(
+        '.product-card[data-product-id="' + CSS.escape(item.id) + '"]'
+      );
+      if (row) el.storeProductResults.appendChild(row);
+    });
+  }
+
   function runStoreProductSearch(keyword) {
     clearInlineError(el.storeProductErrorBox);
     el.storeProductResults.innerHTML = "";
@@ -908,11 +999,15 @@
 
         // 목록은 이미 그려졌으니 재고 확인은 백그라운드로 진행 — 화면 전체 로딩과
         // 별개로 각 상품 배지가 알아서 채워진다(진열 위치 자동조회와 같은 방식).
+        // 검사가 다 끝나면 재고 많은 순으로 한 번 재정렬한다(검색 결과 순서는
+        // 재고를 확인하는 동안 그대로 유지 — 중간에 계속 움직이면 보기 불편함).
         runWithConcurrency(products, STORE_PRODUCT_CONCURRENCY, function (product) {
           return checkProductAtStore(product, store).then(function (result) {
             updateStoreProductBadge(product.id, result);
             return result;
           });
+        }).then(function (results) {
+          sortStoreProductResultsByStock(products, results);
         });
       })
       .catch(function (err) {
