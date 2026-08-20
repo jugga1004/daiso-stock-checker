@@ -805,8 +805,11 @@
   }
 
   function checkProductAtStore(product, store) {
+    // lat/lng 기반 "주변 매장" 조회는 실제 거리와 무관하게 정해진 소수의 매장만
+    // 돌려주는 문제가 있어(직접 확인함 — 시흥능곡점 좌표로 조회해도 24km 떨어진
+    // 매봉역점만 나옴), 매장명을 keyword로 넘겨 이름으로 정확히 찾는 방식을 쓴다.
     return withRetry(function () {
-      return currentBrand().fetchInventory({ productId: product.id, lat: store.lat, lng: store.lng });
+      return currentBrand().fetchInventory({ productId: product.id, keyword: store.name });
     })
       .then(function (data) {
         var match = (data.stores || []).find(function (s) { return s.name === store.name; });
