@@ -91,6 +91,13 @@
   // ---------------------------------------------------------------------
   // 상태
   // ---------------------------------------------------------------------
+  // 즐겨찾는 매장 localStorage 키. state 객체 리터럴이 만들어지는 시점에
+  // loadFavoriteStores()가 바로 호출되므로, 이 상수는 state보다 먼저 정의돼야
+  // 한다(아래에서 뒤늦게 선언하면 var 호이스팅 때문에 값이 아직 undefined인
+  // 채로 읽혀서 즐겨찾기가 매번 빈 배열로 초기화되는 버그가 있었다 — 직접 재현·확인함:
+  // 세션 중 즐겨찾기는 잘 저장되는데 새로고침하면 사라지는 증상이 바로 이거였음).
+  var FAVORITE_STORES_KEY = "daiso-stock-checker:favoriteStores";
+
   var state = {
     brand: "daiso",
     mode: "product", // 'product'(상품으로 찾기) | 'store'(매장으로 찾기)
@@ -108,12 +115,9 @@
   // ---------------------------------------------------------------------
   // 즐겨찾는 매장 (localStorage에 로컬 저장 — 서버로 전송하지 않음)
   // ---------------------------------------------------------------------
-  var FAVORITE_STORES_KEY = "daiso-stock-checker:favoriteStores";
-
   function loadFavoriteStores() {
     try {
       var raw = localStorage.getItem(FAVORITE_STORES_KEY);
-      console.log("[재고확인] 즐겨찾기 불러오기:", raw);
       var parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
@@ -125,7 +129,6 @@
   function persistFavoriteStores() {
     try {
       localStorage.setItem(FAVORITE_STORES_KEY, JSON.stringify(state.favoriteStores));
-      console.log("[재고확인] 즐겨찾기 저장함:", localStorage.getItem(FAVORITE_STORES_KEY));
     } catch (e) {
       // localStorage를 못 쓰는 환경(프라이빗 모드 등)이면 그냥 이번 세션 동안만 기억한다.
       console.error("[재고확인] 즐겨찾기 저장 실패:", e);

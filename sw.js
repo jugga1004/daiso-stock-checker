@@ -4,7 +4,7 @@
 // 배포할 때마다 이 CACHE_NAME을 바꿔야 새 버전이 적용된다(예: v1 -> v2). index.html이
 // 이 파일의 controllerchange 이벤트를 듣고 있다가 새 SW가 활성화되면 한 번 자동으로
 // 새로고침하므로, 캐시 버전만 올리면 그다음엔 신경 쓸 게 없다.
-var CACHE_NAME = "daiso-stock-checker-v5";
+var CACHE_NAME = "daiso-stock-checker-v6";
 var APP_SHELL = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", function (event) {
