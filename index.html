@@ -130,6 +130,7 @@
       <div id="dealTabs" class="deal-tabs" role="tablist">
         <button type="button" class="mode-tab" data-deal="costco" role="tab" aria-selected="true">코스트코 · 상품별</button>
         <button type="button" class="mode-tab" data-deal="traders" role="tab" aria-selected="false">트레이더스 · 전단</button>
+        <button type="button" class="mode-tab" data-deal="marts" role="tab" aria-selected="false">마트 전단</button>
       </div>
       <ul class="deal-list">
         <li id="deal-costco" class="deal-card">
@@ -160,6 +161,23 @@
           <p class="deal-card__desc">주간 행사 전단은 이미지로만 제공되고 자동 수집이 허용되지 않아, 이마트 공식 전단 페이지로 바로 연결합니다.</p>
           <a class="deal-card__link" href="https://eapp.emart.com/tradersclub/flyerImgView.do" target="_blank" rel="noopener noreferrer">이번 주 전단 보기 ↗</a>
         </li>
+        <li id="deal-marts" class="deal-card" hidden>
+          <div class="deal-card__top">
+            <p class="deal-card__name">마트 전단</p>
+            <span class="deal-badge">공식 링크</span>
+          </div>
+          <p class="deal-card__desc">대형마트 주간 행사 전단입니다. 전단은 이미지로 제공되어 각 마트의 전단 페이지로 바로 연결합니다.</p>
+          <ul class="mart-links">
+            <li>
+              <a class="deal-card__link" href="https://eapp.emart.com/leaflet/leafletView_EL.do?trcknCode=leafletMainBanner" target="_blank" rel="noopener noreferrer">이마트 이번 주 전단 ↗</a>
+              <p class="mart-links__note">이마트 공식 페이지</p>
+            </li>
+            <li>
+              <a class="deal-card__link" href="https://www.mlotte.net/" target="_blank" rel="noopener noreferrer">롯데마트 · 롯데슈퍼 전단 ↗</a>
+              <p class="mart-links__note">참고용 · 운영 주체를 확인하지 못한 전단 모음 사이트입니다. 정확한 행사는 롯데마트 앱(롯데마트GO)에서 확인해 주세요.</p>
+            </li>
+          </ul>
+        </li>
       </ul>
       <p class="manual-location-hint">* 할인 정보는 참고용이며 실제 매장 행사와 다를 수 있습니다. 행사 기간·가격은 공식 채널에서 다시 확인해 주세요.</p>
     </section>
@@ -167,7 +185,7 @@
 
   <footer class="app-footer">
     <p>
-      이 사이트는 다이소·코스트코·이마트 트레이더스의 공식 서비스가 아니며, 비공식 오픈소스 프로젝트
+      이 사이트는 다이소·코스트코·이마트(트레이더스 포함)·롯데마트의 공식 서비스가 아니며, 비공식 오픈소스 프로젝트
       <a href="https://github.com/hmmhmmhm/daiso-mcp" target="_blank" rel="noopener noreferrer">daiso-mcp</a>
       (MIT License)의 공개 API를 이용합니다. "내 위치로 주변 매장 찾기" 사용 시
       좌표를 지역명으로 바꾸기 위해 <a href="https://www.bigdatacloud.com/" target="_blank" rel="noopener noreferrer">BigDataCloud</a>

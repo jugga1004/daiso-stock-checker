@@ -723,3 +723,18 @@ button.secondary {
 [hidden] {
   display: none !important;
 }
+
+.mart-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mart-links__note {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}

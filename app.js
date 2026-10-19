@@ -361,7 +361,7 @@
   // 상위 서비스 탭: 'stock'(재고 확인 — 다이소) | 'deals'(할인 정보 — 코스트코·트레이더스)
   var SERVICE_DESC = {
     stock: "다이소 매장의 상품 재고를 확인합니다",
-    deals: "코스트코 · 트레이더스 할인 정보를 확인합니다",
+    deals: "코스트코 할인과 트레이더스·마트 전단을 확인합니다",
   };
 
   function setService(service) {
@@ -568,8 +568,9 @@
     Array.prototype.forEach.call(this.querySelectorAll(".mode-tab"), function (t) {
       t.setAttribute("aria-selected", String(t === tab));
     });
-    setHidden(document.getElementById("deal-costco"), which !== "costco");
-    setHidden(document.getElementById("deal-traders"), which !== "traders");
+    ["costco", "traders", "marts"].forEach(function (k) {
+      setHidden(document.getElementById("deal-" + k), which !== k);
+    });
   });
 
   el.serviceTabs.addEventListener("click", function (e) {
