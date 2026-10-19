@@ -1,10 +1,12 @@
-// 앱 셸(정적 파일)만 오프라인 캐싱한다. 재고 API(mcp.aka.page)는 항상 최신 데이터가
+// 앱 셸(정적 파일)을 오프라인용으로 캐싱한다. 재고·할인 API는 항상 최신 데이터가
 // 필요하므로 절대 캐싱하지 않고 그대로 네트워크로 흘려보낸다.
 //
-// 배포할 때마다 이 CACHE_NAME을 바꿔야 새 버전이 적용된다(예: v1 -> v2). index.html이
-// 이 파일의 controllerchange 이벤트를 듣고 있다가 새 SW가 활성화되면 한 번 자동으로
-// 새로고침하므로, 캐시 버전만 올리면 그다음엔 신경 쓸 게 없다.
-var CACHE_NAME = "daiso-stock-checker-v12";
+// 전략: 네트워크 우선(network-first). 인터넷이 되면 항상 서버의 최신 파일을 받고(브라우저
+// HTTP 캐시도 재검증), 오프라인일 때만 저장해 둔 사본을 보여준다. 예전에는 캐시를 먼저
+// 보여주는 방식이라 배포 후에도 옛 화면이 한 번 더 남는 문제가 있었다.
+//
+// CACHE_NAME을 바꾸면 이전 캐시가 정리된다(배포마다 올려두면 안전).
+var CACHE_NAME = "daiso-stock-checker-v13";
 var APP_SHELL = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", function (event) {
@@ -12,7 +14,15 @@ self.addEventListener("install", function (event) {
     caches
       .open(CACHE_NAME)
       .then(function (cache) {
-        return cache.addAll(APP_SHELL);
+        // cache:"reload"로 브라우저 HTTP 캐시를 건너뛰고 서버에서 직접 받는다
+        // (cache.addAll은 오래된 HTTP 캐시본을 그대로 저장할 수 있다).
+        return Promise.all(
+          APP_SHELL.map(function (path) {
+            return fetch(path, { cache: "reload" }).then(function (res) {
+              if (res.ok) return cache.put(path, res);
+            });
+          })
+        );
       })
       .then(function () {
         return self.skipWaiting();
@@ -44,30 +54,25 @@ self.addEventListener("activate", function (event) {
 self.addEventListener("fetch", function (event) {
   var url = new URL(event.request.url);
 
-  // 다른 오리진(재고 API 등)은 캐시 없이 그대로 통과 — 절대 오래된 재고 정보를
-  // 보여주면 안 되기 때문.
+  // 다른 오리진(재고·할인 API 등)은 캐시 없이 그대로 통과
   if (url.origin !== self.location.origin) return;
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      var networkFetch = fetch(event.request)
-        .then(function (response) {
-          if (response && response.ok) {
-            var clone = response.clone();
-            caches.open(CACHE_NAME).then(function (cache) {
-              cache.put(event.request, clone);
-            });
-          }
-          return response;
-        })
-        .catch(function () {
-          return cached; // 오프라인이면 캐시된 화면이라도 보여준다
+    fetch(event.request, { cache: "no-cache" })
+      .then(function (response) {
+        if (response && response.ok) {
+          var clone = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) {
+            cache.put(event.request, clone);
+          });
+        }
+        return response;
+      })
+      .catch(function () {
+        return caches.match(event.request).then(function (cached) {
+          return cached || caches.match("./index.html");
         });
-
-      // 캐시가 있으면 일단 그걸 즉시 보여주고(빠름 + 오프라인 지원), 네트워크
-      // 응답은 백그라운드에서 캐시를 갱신하는 데만 쓴다.
-      return cached || networkFetch;
-    })
+      })
   );
 });
