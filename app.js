@@ -388,7 +388,7 @@
   // ---------------------------------------------------------------------
   // Worker 배포 후 주소를 여기에 넣으면 "준비 중" 대신 실제 목록이 나온다.
   // 비워두면 기존처럼 "준비 중"으로 남는다. 예: "https://costco-deals.<계정>.workers.dev/"
-  var COSTCO_DEALS_API = "";
+  var COSTCO_DEALS_API = "https://costco-deals.jugga1004.workers.dev/";
   var COSTCO_PAGE = 50;
   var costco = { items: [], loaded: false, loading: false, shown: COSTCO_PAGE };
 
