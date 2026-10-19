@@ -389,6 +389,35 @@
   // Worker 배포 후 주소를 여기에 넣으면 "준비 중" 대신 실제 목록이 나온다.
   // 비워두면 기존처럼 "준비 중"으로 남는다. 예: "https://costco-deals.<계정>.workers.dev/"
   var COSTCO_DEALS_API = "https://costco-deals.jugga1004.workers.dev/";
+  // 상품 URL 첫 경로(영문 슬러그)로 카테고리를 구분한다 — 한글 이름은 슬러그를 보고 붙인 번역이다.
+  var COSTCO_CATEGORY_LABEL = {
+    Foods: "식품",
+    FurnitureBeddingHome: "가구·침구·홈",
+    ClothingBagsAccessories: "의류·가방·잡화",
+    HomeKitchen: "주방·생활용품",
+    "BeautyHouseholdPersonal-Care": "뷰티·생활·위생",
+    Appliances: "가전",
+    HealthSupplement: "건강식품",
+    BabyKidsToysPets: "유아·완구·반려",
+    HardwareAutomotive: "공구·자동차",
+    ElectronicsComputers: "전자·컴퓨터",
+    PatioLawnGarden: "정원·야외",
+    "Gift-Set-Special": "선물세트",
+    SportsFitnessCamping: "스포츠·캠핑",
+    "StationeryOffice-Supplies": "문구·사무",
+    JewelryWatchesAccessories: "주얼리·시계"
+  };
+
+  function costcoCategoryOf(it) {
+    var m = /costco\.co\.kr\/([^\/]+)/.exec(it.url || "");
+    var slug = m ? m[1] : "";
+    return COSTCO_CATEGORY_LABEL[slug] ? slug : "etc";
+  }
+
+  function costcoCategoryName(slug) {
+    return COSTCO_CATEGORY_LABEL[slug] || "기타";
+  }
+
   var COSTCO_PAGE = 50;
   var costco = { items: [], loaded: false, loading: false, shown: COSTCO_PAGE };
 
@@ -399,14 +428,33 @@
     return d.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" });
   }
 
+  function fillCostcoCategories() {
+    var counts = {};
+    costco.items.forEach(function (it) {
+      var c = costcoCategoryOf(it);
+      counts[c] = (counts[c] || 0) + 1;
+    });
+    var sel = document.getElementById("costcoDealsCategory");
+    sel.innerHTML =
+      '<option value="">전체 카테고리 (' + costco.items.length + ")</option>" +
+      Object.keys(counts)
+        .sort(function (a, b) { return counts[b] - counts[a]; })
+        .map(function (c) {
+          return '<option value="' + esc(c) + '">' + esc(costcoCategoryName(c)) + " (" + counts[c] + ")</option>";
+        })
+        .join("");
+  }
+
   function renderCostcoDeals() {
     var q = document.getElementById("costcoDealsFilter").value.trim().toLowerCase();
     var sortKey = document.getElementById("costcoDealsSort").value;
+    var catKey = document.getElementById("costcoDealsCategory").value;
     function rate(it) {
       return typeof it.price === "number" ? it.discount / (it.price + it.discount) : 0;
     }
     var list = costco.items
       .filter(function (it) {
+        if (catKey && costcoCategoryOf(it) !== catKey) return false;
         return !q || it.name.toLowerCase().indexOf(q) >= 0;
       })
       .sort(function (a, b) {
@@ -482,6 +530,7 @@
           .map(function (k) { return seen[k]; })
           .sort(function (a, b) { return b.discount - a.discount; });
         costco.loaded = true;
+        fillCostcoCategories();
         var badge = document.getElementById("costcoBadge");
         badge.textContent = "온라인몰 기준";
         badge.className = "deal-badge";
@@ -499,6 +548,10 @@
     costco.shown = COSTCO_PAGE;
     renderCostcoDeals();
   });
+  document.getElementById("costcoDealsCategory").addEventListener("change", function () {
+    costco.shown = COSTCO_PAGE;
+    renderCostcoDeals();
+  });
   document.getElementById("costcoDealsSort").addEventListener("change", function () {
     costco.shown = COSTCO_PAGE;
     renderCostcoDeals();
@@ -506,6 +559,17 @@
   document.getElementById("costcoDealsMore").addEventListener("click", function () {
     costco.shown += COSTCO_PAGE;
     renderCostcoDeals();
+  });
+
+  document.getElementById("dealTabs").addEventListener("click", function (e) {
+    var tab = e.target.closest(".mode-tab");
+    if (!tab) return;
+    var which = tab.dataset.deal;
+    Array.prototype.forEach.call(this.querySelectorAll(".mode-tab"), function (t) {
+      t.setAttribute("aria-selected", String(t === tab));
+    });
+    setHidden(document.getElementById("deal-costco"), which !== "costco");
+    setHidden(document.getElementById("deal-traders"), which !== "traders");
   });
 
   el.serviceTabs.addEventListener("click", function (e) {

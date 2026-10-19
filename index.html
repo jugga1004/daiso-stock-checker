@@ -127,8 +127,12 @@
     </section>
     <!-- 할인 정보 (코스트코 · 트레이더스) -->
     <section id="view-deals" hidden>
+      <div id="dealTabs" class="deal-tabs" role="tablist">
+        <button type="button" class="mode-tab" data-deal="costco" role="tab" aria-selected="true">코스트코 · 상품별</button>
+        <button type="button" class="mode-tab" data-deal="traders" role="tab" aria-selected="false">트레이더스 · 전단</button>
+      </div>
       <ul class="deal-list">
-        <li class="deal-card">
+        <li id="deal-costco" class="deal-card">
           <div class="deal-card__top">
             <p class="deal-card__name">코스트코</p>
             <span id="costcoBadge" class="deal-badge deal-badge--soon">준비 중</span>
@@ -136,6 +140,7 @@
           <p class="deal-card__desc">온라인몰 기준 할인 상품과 할인 기간입니다. 매장(창고점) 가격·쿠폰북 행사와는 다를 수 있습니다.</p>
           <div id="costcoDealsBox" hidden>
             <input id="costcoDealsFilter" class="deal-filter" type="search" placeholder="상품명으로 찾기 (예: 우유, 견과)" autocomplete="off" />
+            <select id="costcoDealsCategory" class="deal-filter" aria-label="카테고리"><option value="">전체 카테고리</option></select>
             <select id="costcoDealsSort" class="deal-filter" aria-label="정렬">
               <option value="rate">할인율 높은 순</option>
               <option value="amount">할인액 큰 순</option>
@@ -147,7 +152,7 @@
           </div>
           <a class="deal-card__link" href="https://www.costco.co.kr/" target="_blank" rel="noopener noreferrer">코스트코 공식 사이트에서 확인 ↗</a>
         </li>
-        <li class="deal-card">
+        <li id="deal-traders" class="deal-card" hidden>
           <div class="deal-card__top">
             <p class="deal-card__name">이마트 트레이더스</p>
             <span class="deal-badge">공식 링크</span>

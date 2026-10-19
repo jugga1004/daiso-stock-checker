@@ -711,3 +711,10 @@ button.secondary {
 .app-footer a {
   color: var(--color-text-muted);
 }
+
+.deal-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: var(--gap);
+}
