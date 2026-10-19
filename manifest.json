@@ -1,7 +1,7 @@
 {
   "name": "장보기 체크",
   "short_name": "장보기체크",
-  "description": "다이소 재고 확인과 코스트코·트레이더스 할인 정보를 한곳에서 확인하는 개인용 도구",
+  "description": "다이소 재고 확인과 코스트코 할인·마트 전단지를 한곳에서 확인하는 개인용 도구",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
