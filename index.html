@@ -131,9 +131,15 @@
         <li class="deal-card">
           <div class="deal-card__top">
             <p class="deal-card__name">코스트코</p>
-            <span class="deal-badge deal-badge--soon">준비 중</span>
+            <span id="costcoBadge" class="deal-badge deal-badge--soon">준비 중</span>
           </div>
-          <p class="deal-card__desc">온라인몰 기준 할인 상품과 할인 기간을 모아 보여줄 예정입니다. 매장(창고점) 가격·쿠폰북 행사와는 다를 수 있습니다.</p>
+          <p class="deal-card__desc">온라인몰 기준 할인 상품과 할인 기간입니다. 매장(창고점) 가격·쿠폰북 행사와는 다를 수 있습니다.</p>
+          <div id="costcoDealsBox" hidden>
+            <input id="costcoDealsFilter" class="deal-filter" type="search" placeholder="상품명으로 찾기 (예: 우유, 견과)" autocomplete="off" />
+            <p id="costcoDealsStatus" class="deal-status"></p>
+            <ul id="costcoDealsList" class="costco-deal-list"></ul>
+            <button id="costcoDealsMore" type="button" class="deal-more" hidden>더 보기</button>
+          </div>
           <a class="deal-card__link" href="https://www.costco.co.kr/" target="_blank" rel="noopener noreferrer">코스트코 공식 사이트에서 확인 ↗</a>
         </li>
         <li class="deal-card">

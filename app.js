@@ -376,11 +376,117 @@
 
     if (service === "deals") {
       navigateTo("deals");
+      loadCostcoDeals();
     } else {
       navigateTo(state.mode === "product" ? "search" : "store-search");
       if (state.mode === "store") renderFavoriteStores();
     }
   }
+
+  // ---------------------------------------------------------------------
+  // 코스트코 할인 (Cloudflare Worker 중계 — worker/costco-deals.js)
+  // ---------------------------------------------------------------------
+  // Worker 배포 후 주소를 여기에 넣으면 "준비 중" 대신 실제 목록이 나온다.
+  // 비워두면 기존처럼 "준비 중"으로 남는다. 예: "https://costco-deals.<계정>.workers.dev/"
+  var COSTCO_DEALS_API = "";
+  var COSTCO_PAGE = 50;
+  var costco = { items: [], loaded: false, loading: false, shown: COSTCO_PAGE };
+
+  function formatDealDate(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" });
+  }
+
+  function renderCostcoDeals() {
+    var q = document.getElementById("costcoDealsFilter").value.trim().toLowerCase();
+    var list = costco.items.filter(function (it) {
+      return !q || it.name.toLowerCase().indexOf(q) >= 0;
+    });
+    var status = document.getElementById("costcoDealsStatus");
+    var ul = document.getElementById("costcoDealsList");
+    var more = document.getElementById("costcoDealsMore");
+
+    status.textContent = list.length
+      ? "할인 중인 상품 " + list.length + "개 · 할인액 큰 순 · 온라인몰 기준"
+      : "조건에 맞는 할인 상품이 없습니다.";
+
+    ul.innerHTML = list
+      .slice(0, costco.shown)
+      .map(function (it) {
+        var end = formatDealDate(it.end);
+        var img = it.img
+          ? '<img src="' + esc(it.img) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'" />'
+          : "";
+        return (
+          '<li><a class="costco-deal" href="' + esc(it.url || "#") + '" target="_blank" rel="noopener noreferrer">' +
+          img +
+          '<div class="costco-deal__info"><p class="costco-deal__name">' + esc(it.name) + "</p>" +
+          '<p class="costco-deal__meta"><span class="costco-deal__off">-' + esc(formatPrice(it.discount)) + "</span>" +
+          (typeof it.price === "number" ? "판매가 " + esc(formatPrice(it.price)) : "") +
+          (end ? " · " + esc(end) + "까지" : "") +
+          "</p></div></a></li>"
+        );
+      })
+      .join("");
+    setHidden(more, list.length <= costco.shown);
+  }
+
+  function loadCostcoDeals() {
+    if (!COSTCO_DEALS_API || costco.loaded || costco.loading) return;
+    costco.loading = true;
+    setHidden(document.getElementById("costcoDealsBox"), false);
+    var status = document.getElementById("costcoDealsStatus");
+    status.textContent = "할인 목록을 불러오는 중... (처음엔 10초 정도 걸릴 수 있습니다)";
+
+    function getChunk(n) {
+      return fetch(COSTCO_DEALS_API + "?chunk=" + n).then(function (res) {
+        if (!res.ok) throw new Error("HTTP_" + res.status);
+        return res.json();
+      });
+    }
+
+    getChunk(0)
+      .then(function (first) {
+        var rest = [];
+        for (var n = 1; n < first.totalChunks; n++) rest.push(getChunk(n));
+        return Promise.all(rest).then(function (others) {
+          return [first].concat(others);
+        });
+      })
+      .then(function (chunks) {
+        var seen = {};
+        chunks.forEach(function (c) {
+          c.items.forEach(function (it) {
+            seen[it.code] = it;
+          });
+        });
+        costco.items = Object.keys(seen)
+          .map(function (k) { return seen[k]; })
+          .sort(function (a, b) { return b.discount - a.discount; });
+        costco.loaded = true;
+        var badge = document.getElementById("costcoBadge");
+        badge.textContent = "온라인몰 기준";
+        badge.className = "deal-badge";
+        renderCostcoDeals();
+      })
+      .catch(function () {
+        status.textContent = "할인 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+      })
+      .finally(function () {
+        costco.loading = false;
+      });
+  }
+
+  document.getElementById("costcoDealsFilter").addEventListener("input", function () {
+    costco.shown = COSTCO_PAGE;
+    renderCostcoDeals();
+  });
+  document.getElementById("costcoDealsMore").addEventListener("click", function () {
+    costco.shown += COSTCO_PAGE;
+    renderCostcoDeals();
+  });
 
   el.serviceTabs.addEventListener("click", function (e) {
     var tab = e.target.closest(".service-tab");
