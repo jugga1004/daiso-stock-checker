@@ -718,3 +718,8 @@ button.secondary {
   gap: 8px;
   margin-bottom: var(--gap);
 }
+
+/* hidden 속성이 display:flex 등 개별 규칙에 덮여 안 숨겨지는 문제 방지 */
+[hidden] {
+  display: none !important;
+}
