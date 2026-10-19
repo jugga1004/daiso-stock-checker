@@ -3,21 +3,26 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-<title>다이소 재고 확인</title>
+<title>장보기 체크</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#d6336c" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="다이소재고" />
+<meta name="apple-mobile-web-app-title" content="장보기체크" />
 <link rel="apple-touch-icon" href="icon.svg" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="app-header">
-    <h1>다이소 재고 확인</h1>
-    <p class="app-header__sub">근처 다이소 매장의 상품 재고를 확인해보세요</p>
+    <h1>장보기 체크</h1>
+    <p class="app-header__sub">가기 전에 확인하세요 · 재고와 할인 정보</p>
+    <div id="serviceTabs" class="service-tabs" role="tablist">
+      <button type="button" class="service-tab" data-service="stock" role="tab" aria-selected="true">재고 확인</button>
+      <button type="button" class="service-tab" data-service="deals" role="tab" aria-selected="false">할인 정보</button>
+    </div>
+    <p id="serviceDesc" class="service-desc">다이소 매장의 상품 재고를 확인합니다</p>
     <div id="modeTabs" class="mode-tabs" role="tablist">
       <button type="button" class="mode-tab" data-mode="product" role="tab" aria-selected="true">상품으로 찾기</button>
       <button type="button" class="mode-tab" data-mode="store" role="tab" aria-selected="false">매장으로 찾기</button>
@@ -120,11 +125,33 @@
 
       <ul id="storeProductResults" class="product-list"></ul>
     </section>
+    <!-- 할인 정보 (코스트코 · 트레이더스) -->
+    <section id="view-deals" hidden>
+      <ul class="deal-list">
+        <li class="deal-card">
+          <div class="deal-card__top">
+            <p class="deal-card__name">코스트코</p>
+            <span class="deal-badge deal-badge--soon">준비 중</span>
+          </div>
+          <p class="deal-card__desc">온라인몰 기준 할인 상품과 할인 기간을 모아 보여줄 예정입니다. 매장(창고점) 가격·쿠폰북 행사와는 다를 수 있습니다.</p>
+          <a class="deal-card__link" href="https://www.costco.co.kr/" target="_blank" rel="noopener noreferrer">코스트코 공식 사이트에서 확인 ↗</a>
+        </li>
+        <li class="deal-card">
+          <div class="deal-card__top">
+            <p class="deal-card__name">이마트 트레이더스</p>
+            <span class="deal-badge">공식 링크</span>
+          </div>
+          <p class="deal-card__desc">주간 행사 전단은 이미지로만 제공되고 자동 수집이 허용되지 않아, 이마트 공식 전단 페이지로 바로 연결합니다.</p>
+          <a class="deal-card__link" href="https://eapp.emart.com/tradersclub/flyerImgView.do" target="_blank" rel="noopener noreferrer">이번 주 전단 보기 ↗</a>
+        </li>
+      </ul>
+      <p class="manual-location-hint">* 할인 정보는 참고용이며 실제 매장 행사와 다를 수 있습니다. 행사 기간·가격은 공식 채널에서 다시 확인해 주세요.</p>
+    </section>
   </main>
 
   <footer class="app-footer">
     <p>
-      이 사이트는 다이소 공식 서비스가 아니며, 비공식 오픈소스 프로젝트
+      이 사이트는 다이소·코스트코·이마트 트레이더스의 공식 서비스가 아니며, 비공식 오픈소스 프로젝트
       <a href="https://github.com/hmmhmmhm/daiso-mcp" target="_blank" rel="noopener noreferrer">daiso-mcp</a>
       (MIT License)의 공개 API를 이용합니다. "내 위치로 주변 매장 찾기" 사용 시
       좌표를 지역명으로 바꾸기 위해 <a href="https://www.bigdatacloud.com/" target="_blank" rel="noopener noreferrer">BigDataCloud</a>

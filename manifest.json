@@ -1,7 +1,7 @@
 {
-  "name": "다이소 재고 확인",
-  "short_name": "다이소재고",
-  "description": "근처 다이소 매장의 상품 재고를 확인하는 개인용 도구",
+  "name": "장보기 체크",
+  "short_name": "장보기체크",
+  "description": "다이소 재고 확인과 코스트코·트레이더스 할인 정보를 한곳에서 확인하는 개인용 도구",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

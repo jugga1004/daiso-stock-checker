@@ -100,6 +100,7 @@
 
   var state = {
     brand: "daiso",
+    service: "stock", // 'stock'(재고 확인) | 'deals'(할인 정보)
     mode: "product", // 'product'(상품으로 찾기) | 'store'(매장으로 찾기)
     screen: "search",
     searchResults: [],
@@ -165,6 +166,9 @@
   // DOM 참조
   // ---------------------------------------------------------------------
   var el = {
+    serviceTabs: document.getElementById("serviceTabs"),
+    serviceDesc: document.getElementById("serviceDesc"),
+    viewDeals: document.getElementById("view-deals"),
     modeTabs: document.getElementById("modeTabs"),
     viewSearch: document.getElementById("view-search"),
     viewProduct: document.getElementById("view-product"),
@@ -351,7 +355,38 @@
     setHidden(el.viewProduct, screen !== "product");
     setHidden(el.viewStoreSearch, screen !== "store-search");
     setHidden(el.viewStoreProducts, screen !== "store-products");
+    setHidden(el.viewDeals, screen !== "deals");
   }
+
+  // 상위 서비스 탭: 'stock'(재고 확인 — 다이소) | 'deals'(할인 정보 — 코스트코·트레이더스)
+  var SERVICE_DESC = {
+    stock: "다이소 매장의 상품 재고를 확인합니다",
+    deals: "코스트코 · 트레이더스 할인 정보를 확인합니다",
+  };
+
+  function setService(service) {
+    if (state.service === service) return;
+    state.service = service;
+
+    Array.prototype.forEach.call(el.serviceTabs.querySelectorAll(".service-tab"), function (tab) {
+      tab.setAttribute("aria-selected", String(tab.dataset.service === service));
+    });
+    el.serviceDesc.textContent = SERVICE_DESC[service];
+    setHidden(el.modeTabs, service !== "stock");
+
+    if (service === "deals") {
+      navigateTo("deals");
+    } else {
+      navigateTo(state.mode === "product" ? "search" : "store-search");
+      if (state.mode === "store") renderFavoriteStores();
+    }
+  }
+
+  el.serviceTabs.addEventListener("click", function (e) {
+    var tab = e.target.closest(".service-tab");
+    if (!tab) return;
+    setService(tab.dataset.service);
+  });
 
   function setMode(mode) {
     if (state.mode === mode) return;

@@ -42,6 +42,101 @@ body {
   font-size: 0.85rem;
 }
 
+/* 상위 서비스 탭 (재고 확인 / 할인 정보) */
+.service-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.service-tab {
+  background: none;
+  color: var(--color-text-muted);
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: -1px;
+}
+
+.service-tab:hover {
+  background: none;
+  color: var(--color-text);
+}
+
+.service-tab[aria-selected="true"] {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.service-desc {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+/* 할인 정보 카드 */
+.deal-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.deal-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.deal-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.deal-card__name {
+  margin: 0;
+  font-weight: 700;
+}
+
+.deal-card__desc {
+  margin: 6px 0 10px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.deal-card__link {
+  display: inline-block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.deal-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  white-space: nowrap;
+}
+
+.deal-badge--soon {
+  background: #eee;
+  color: var(--color-text-muted);
+}
+
 .mode-tabs {
   display: flex;
   justify-content: center;
