@@ -190,6 +190,12 @@ body {
   -webkit-box-orient: vertical;
 }
 
+.costco-deal__price {
+  margin: 0 0 2px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
 .costco-deal__meta {
   margin: 0;
   font-size: 0.78rem;

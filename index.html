@@ -136,6 +136,11 @@
           <p class="deal-card__desc">온라인몰 기준 할인 상품과 할인 기간입니다. 매장(창고점) 가격·쿠폰북 행사와는 다를 수 있습니다.</p>
           <div id="costcoDealsBox" hidden>
             <input id="costcoDealsFilter" class="deal-filter" type="search" placeholder="상품명으로 찾기 (예: 우유, 견과)" autocomplete="off" />
+            <select id="costcoDealsSort" class="deal-filter" aria-label="정렬">
+              <option value="rate">할인율 높은 순</option>
+              <option value="amount">할인액 큰 순</option>
+              <option value="end">종료 임박 순</option>
+            </select>
             <p id="costcoDealsStatus" class="deal-status"></p>
             <ul id="costcoDealsList" class="costco-deal-list"></ul>
             <button id="costcoDealsMore" type="button" class="deal-more" hidden>더 보기</button>

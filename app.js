@@ -401,15 +401,25 @@
 
   function renderCostcoDeals() {
     var q = document.getElementById("costcoDealsFilter").value.trim().toLowerCase();
-    var list = costco.items.filter(function (it) {
-      return !q || it.name.toLowerCase().indexOf(q) >= 0;
-    });
+    var sortKey = document.getElementById("costcoDealsSort").value;
+    function rate(it) {
+      return typeof it.price === "number" ? it.discount / (it.price + it.discount) : 0;
+    }
+    var list = costco.items
+      .filter(function (it) {
+        return !q || it.name.toLowerCase().indexOf(q) >= 0;
+      })
+      .sort(function (a, b) {
+        if (sortKey === "amount") return b.discount - a.discount;
+        if (sortKey === "end") return Date.parse(a.end || "9999-12-31") - Date.parse(b.end || "9999-12-31");
+        return rate(b) - rate(a); // 기본: 할인율 높은 순
+      });
     var status = document.getElementById("costcoDealsStatus");
     var ul = document.getElementById("costcoDealsList");
     var more = document.getElementById("costcoDealsMore");
 
     status.textContent = list.length
-      ? "할인 중인 상품 " + list.length + "개 · 할인액 큰 순 · 온라인몰 기준"
+      ? "할인 중인 상품 " + list.length + "개 · 온라인몰 기준 · 가격은 할인 적용가"
       : "조건에 맞는 할인 상품이 없습니다.";
 
     ul.innerHTML = list
@@ -423,8 +433,14 @@
           '<li><a class="costco-deal" href="' + esc(it.url || "#") + '" target="_blank" rel="noopener noreferrer">' +
           img +
           '<div class="costco-deal__info"><p class="costco-deal__name">' + esc(it.name) + "</p>" +
-          '<p class="costco-deal__meta"><span class="costco-deal__off">-' + esc(formatPrice(it.discount)) + "</span>" +
-          (typeof it.price === "number" ? "판매가 " + esc(formatPrice(it.price)) : "") +
+          '<p class="costco-deal__price">' +
+          (typeof it.price === "number"
+            ? '<span class="costco-deal__off">' + Math.round(rate(it) * 100) + "%</span>" + esc(formatPrice(it.price))
+            : "") +
+          "</p>" +
+          '<p class="costco-deal__meta">' +
+          (typeof it.price === "number" ? "정상가 " + esc(formatPrice(it.price + it.discount)) + " · " : "") +
+          esc(formatPrice(it.discount)) + " 할인" +
           (end ? " · " + esc(end) + "까지" : "") +
           "</p></div></a></li>"
         );
@@ -480,6 +496,10 @@
   }
 
   document.getElementById("costcoDealsFilter").addEventListener("input", function () {
+    costco.shown = COSTCO_PAGE;
+    renderCostcoDeals();
+  });
+  document.getElementById("costcoDealsSort").addEventListener("change", function () {
     costco.shown = COSTCO_PAGE;
     renderCostcoDeals();
   });
