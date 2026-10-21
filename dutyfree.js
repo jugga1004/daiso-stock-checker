@@ -399,7 +399,7 @@
     renderWeek();
     renderItems();
     updatePreview();
-    setHidden($("dutyLinkFetch"), !DUTY_FX_API);
+    setHidden($("dutyItemFetch"), !DUTY_FX_API);
   }
 
   function setHidden(node, hidden) {
