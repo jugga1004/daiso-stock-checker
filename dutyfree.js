@@ -345,9 +345,9 @@
         var tk = td ? it.usd * td.rate : NaN;
         var mk = tm ? it.usd * tm.rate : NaN;
         var d = isFinite(mk) && isFinite(tk) ? mk - tk : NaN;
-        var label = it.name ? esc(it.name) : '<span class="muted">이름 없음</span>';
+        var label = it.name ? '<span class="item-name__text" title="' + esc(it.name) + '">' + esc(it.name) + "</span>" : '<span class="muted">이름 없음</span>';
         return (
-          "<tr><th>" +
+          '<tr><th class="item-name">' +
           (it.url ? '<a href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">' + label + " ↗</a>" : label) +
           '</th><td><span class="usd-edit">$<input type="number" step="0.01" min="0" data-usd="' + esc(it.id) +
           '" value="' + num(it.usd, 2).replace(/,/g, "") + '" aria-label="면세점 달러가" /></span></td>' +
