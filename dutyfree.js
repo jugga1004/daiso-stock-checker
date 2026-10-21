@@ -431,8 +431,12 @@
       .then(function () { return fetchProduct(it.url); })
       .then(
         function (p) {
-          if (p.usd) updateItemUsd(id, p.usd);
+          // 정가만 읽힌 경우(로그인 전 회원가는 안 보임)에는, 사용자가 직접 입력해 둔
+          // 더 낮은 가격을 정가로 되돌리지 않는다.
+          var keepManual = !p.saleUsd && p.listUsd && it.usd < p.listUsd;
+          if (p.usd && !keepManual) updateItemUsd(id, p.usd);
           render();
+          if (keepManual) showError((it.name || "상품") + ": 정가만 확인돼 직접 입력한 가격($" + num(it.usd, 2) + ")을 유지했습니다.");
         },
         function (err) {
           if (btn) btn.textContent = "새로고침";
@@ -477,7 +481,7 @@
             $("dutyItemPreview").innerHTML = p.saleUsd
               ? '<span class="duty-badge">할인가</span> $' + num(p.saleUsd, 2) +
                 ' <span class="muted">(정가 $' + num(p.listUsd || p.usd, 2) + (p.discountPct ? " · " + num(p.discountPct, 0) + "% 할인" : "") + ")</span>"
-              : '<span class="duty-badge duty-badge--warn">정가</span> $' + num(p.usd, 2) + " — 할인 표시가 없는 상품입니다. 다르면 목록에서 바로 고칠 수 있습니다.";
+              : '<span class="duty-badge duty-badge--warn">정가</span> $' + num(p.usd, 2) + " — 로그인 전에는 회원 할인가가 보이지 않습니다. 로그인했을 때 보이는 가격을 달러 칸에 직접 입력해 주세요.";
           },
           function (err) {
             $("dutyItemPreview").textContent = "";
