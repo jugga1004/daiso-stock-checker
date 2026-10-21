@@ -868,3 +868,37 @@ button.secondary {
 }
 
 .link-btn:hover { background: none; }
+
+/* 좁은 화면(예: 폴드 바깥 화면 ~340px)에서도 탭 글자가 두 줄로 밀리지 않게 한다 */
+.service-tabs {
+  width: 100%;
+}
+
+.service-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.mode-tab {
+  white-space: nowrap;
+}
+
+@media (max-width: 400px) {
+  .service-tab {
+    font-size: 0.92rem;
+  }
+
+  .mode-tabs,
+  .deal-tabs {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .mode-tab {
+    padding: 8px 12px;
+    font-size: 0.84rem;
+  }
+}
