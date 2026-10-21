@@ -6,7 +6,7 @@
 // 보여주는 방식이라 배포 후에도 옛 화면이 한 번 더 남는 문제가 있었다.
 //
 // CACHE_NAME을 바꾸면 이전 캐시가 정리된다(배포마다 올려두면 안전).
-var CACHE_NAME = "daiso-stock-checker-v21";
+var CACHE_NAME = "daiso-stock-checker-v22";
 var APP_SHELL = ["./", "./index.html", "./style.css", "./app.js", "./dutyfree.js", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", function (event) {

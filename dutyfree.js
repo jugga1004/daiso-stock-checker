@@ -274,8 +274,8 @@
       '<div class="duty-card__head"><h2>적용환율 (미국 달러)</h2><span class="muted small">전일 고시 매매기준율 기준</span></div>' +
       '<div class="stat-grid">' +
       stat("어제", yd ? rate(yd.rate) + "원" : "—", dayLabel(yesterday)) +
-      stat("오늘", rate(td.rate) + "원", dayLabel(today), isFinite(diffYd) ? (diffYd > 0 ? "neg" : diffYd < 0 ? "pos" : "") : "") +
-      stat("내일", tm ? rate(tm.rate) + "원" : "미정", dayLabel(shift(today, 1)) + tomorrowSub(tm), isFinite(diff) ? (diff > 0 ? "neg" : diff < 0 ? "pos" : "") : "") +
+      stat("오늘", rate(td.rate) + "원", dayLabel(today), "day-today") +
+      stat("내일", tm ? rate(tm.rate) + "원" : "미정", dayLabel(shift(today, 1)) + tomorrowSub(tm), "day-tomorrow") +
       "</div>" +
       (isFinite(diff)
         ? '<p class="duty-note">내일 적용환율은 오늘보다 <strong>' + rate(Math.abs(diff)) + "원 " +
@@ -309,8 +309,8 @@
         var isToday = r.appliedDate === today;
         return (
           '<tr class="' + (isTm ? "row-hi" : "") + '"><th>' + esc(dayLabel(r.appliedDate)) +
-          (isTm ? ' <span class="duty-badge">내일</span>' : isToday ? ' <span class="duty-badge">오늘</span>' : "") +
-          "</th><td><strong>" + rate(r.rate) + "</strong>원</td><td class=\"" +
+          (isTm ? ' <span class="duty-badge duty-badge--tomorrow">내일</span>' : isToday ? ' <span class="duty-badge duty-badge--today">오늘</span>' : "") +
+          '</th><td class="' + (isTm ? "day-tomorrow" : isToday ? "day-today" : "") + '"><strong>' + rate(r.rate) + "</strong>원</td><td class=\"" +
           (isFinite(d) ? (d > 0 ? "neg" : d < 0 ? "pos" : "muted") : "muted") + '">' +
           (!isFinite(d) ? "—" : d === 0 ? rate(0) : (d > 0 ? "▲ " : "▼ ") + rate(Math.abs(d))) + "</td></tr>"
         );
@@ -352,8 +352,8 @@
           '</th><td><span class="usd-edit">$<input type="number" step="0.01" min="0" data-usd="' + esc(it.id) +
           '" value="' + num(it.usd, 2).replace(/,/g, "") + '" aria-label="면세점 달러가" /></span></td>' +
           '<td class="muted">' + (isFinite(yk) ? won(yk) : "—") + "</td>" +
-          "<td>" + (isFinite(tk) ? won(tk) : "—") + "</td>" +
-          "<td>" + (isFinite(mk) ? won(mk) : '<span class="muted">미정</span>') + "</td>" +
+          '<td class="day-today">' + (isFinite(tk) ? won(tk) : "—") + "</td>" +
+          '<td class="day-tomorrow">' + (isFinite(mk) ? won(mk) : '<span class="muted">미정</span>') + "</td>" +
           '<td class="' + (isFinite(d) ? (d > 0 ? "neg" : d < 0 ? "pos" : "muted") : "muted") + '">' + (isFinite(d) ? signedWon(d) : "—") + "</td>" +
           "<td>" + (it.url ? '<button type="button" class="link-btn" data-refresh="' + esc(it.id) + '">새로고침</button> · ' : "") +
           '<button type="button" class="link-btn" data-del="' + esc(it.id) + '">삭제</button></td></tr>'
@@ -367,7 +367,7 @@
     var tdiff = isFinite(tmr) && isFinite(tt) ? tmr - tt : NaN;
     var foot =
       '<tr class="row-hi"><th>합계 ' + items.length + "건</th><td>$" + num(totalUsd, 2) + '</td><td class="muted">' +
-      (isFinite(ty) ? won(ty) : "—") + "</td><td><strong>" + (isFinite(tt) ? won(tt) : "—") + "</strong></td><td><strong>" +
+      (isFinite(ty) ? won(ty) : "—") + '</td><td class="day-today"><strong>' + (isFinite(tt) ? won(tt) : "—") + '</strong></td><td class="day-tomorrow"><strong>' +
       (isFinite(tmr) ? won(tmr) : '<span class="muted">미정</span>') + '</strong></td><td class="' +
       (isFinite(tdiff) ? (tdiff > 0 ? "neg" : tdiff < 0 ? "pos" : "muted") : "muted") + '"><strong>' +
       (isFinite(tdiff) ? signedWon(tdiff) : "—") + "</strong></td><td></td></tr>";
@@ -384,7 +384,7 @@
     }
 
     box.innerHTML =
-      '<div class="table-scroll"><table class="data-table"><thead><tr><th>상품</th><th>달러</th><th>어제</th><th>오늘</th><th>내일</th><th>내일−오늘</th><th></th></tr></thead><tbody>' +
+      '<div class="table-scroll"><table class="data-table"><thead><tr><th>상품</th><th>달러</th><th>어제</th><th class="day-today">오늘</th><th class="day-tomorrow">내일</th><th>내일−오늘</th><th></th></tr></thead><tbody>' +
       rows + "</tbody><tfoot>" + foot + "</tfoot></table></div>" + verdict;
   }
 
