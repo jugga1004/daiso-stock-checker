@@ -6,7 +6,7 @@
   // ---------------------------------------------------------------------
   // Worker(worker/duty-fx.js) 배포 후 주소를 넣는다. 비워두면 "준비 중"으로 보인다.
   // 예: "https://duty-fx.<계정>.workers.dev"
-  var DUTY_FX_API = "";
+  var DUTY_FX_API = "https://duty-fx.jugga1004.workers.dev";
 
   var ITEMS_KEY = "daiso-stock-checker:dutyItems";
   var RATES_KEY = "daiso-stock-checker:dutyRatesCache";
