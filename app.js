@@ -356,12 +356,14 @@
     setHidden(el.viewStoreSearch, screen !== "store-search");
     setHidden(el.viewStoreProducts, screen !== "store-products");
     setHidden(el.viewDeals, screen !== "deals");
+    setHidden(document.getElementById("view-duty"), screen !== "duty");
   }
 
   // 상위 서비스 탭: 'stock'(재고 확인 — 다이소) | 'deals'(할인 정보 — 코스트코·트레이더스)
   var SERVICE_DESC = {
     stock: "다이소 매장의 상품 재고를 확인합니다",
     deals: "코스트코 할인과 마트 전단지를 확인합니다",
+    duty: "면세점 달러 가격을 원화로 환산해 봅니다",
   };
 
   function setService(service) {
@@ -374,7 +376,10 @@
     el.serviceDesc.textContent = SERVICE_DESC[service];
     setHidden(el.modeTabs, service !== "stock");
 
-    if (service === "deals") {
+    if (service === "duty") {
+      navigateTo("duty");
+      if (window.DutyFree) window.DutyFree.show();
+    } else if (service === "deals") {
       navigateTo("deals");
       loadCostcoDeals();
     } else {

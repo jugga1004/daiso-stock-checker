@@ -738,3 +738,133 @@ button.secondary {
   font-size: 0.78rem;
   color: var(--color-text-muted);
 }
+
+/* 면세점 환율 탭 */
+.duty-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: var(--gap);
+}
+
+.duty-card h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.duty-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.muted { color: var(--color-text-muted); }
+.small { font-size: 0.8rem; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.stat {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+
+.stat__label { font-size: 0.78rem; color: var(--color-text-muted); }
+.stat__value { font-size: 1.05rem; font-weight: 700; margin: 2px 0; }
+.stat__sub { font-size: 0.72rem; color: var(--color-text-muted); }
+
+.neg { color: #c92a2a; }
+.pos { color: #1c7ed6; }
+
+.duty-note {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  background: var(--color-bg);
+  border-radius: 8px;
+}
+
+.duty-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+}
+
+.duty-actions {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.duty-ghost {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.duty-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.duty-badge--warn {
+  background: #fff4e6;
+  color: #d9480f;
+}
+
+.table-scroll { overflow-x: auto; margin: 8px 0; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.data-table th,
+.data-table td {
+  padding: 6px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.data-table th:first-child,
+.data-table thead th { text-align: left; font-weight: 600; }
+.data-table tbody th { font-weight: 500; }
+
+.row-hi { background: var(--color-bg); }
+
+.usd-edit input {
+  width: 72px;
+  padding: 3px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.link-btn:hover { background: none; }

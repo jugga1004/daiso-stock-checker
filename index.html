@@ -21,6 +21,7 @@
     <div id="serviceTabs" class="service-tabs" role="tablist">
       <button type="button" class="service-tab" data-service="stock" role="tab" aria-selected="true">재고 확인</button>
       <button type="button" class="service-tab" data-service="deals" role="tab" aria-selected="false">할인 정보</button>
+      <button type="button" class="service-tab" data-service="duty" role="tab" aria-selected="false">면세점 환율</button>
     </div>
     <p id="serviceDesc" class="service-desc">다이소 매장의 상품 재고를 확인합니다</p>
     <div id="modeTabs" class="mode-tabs" role="tablist">
@@ -185,6 +186,37 @@
       </ul>
       <p class="manual-location-hint">* 할인 정보는 참고용이며 실제 매장 행사와 다를 수 있습니다. 행사 기간·가격은 공식 채널에서 다시 확인해 주세요.</p>
     </section>
+    <!-- 면세점 환율 -->
+    <section id="view-duty" hidden>
+      <div id="dutyEstimate"></div>
+
+      <div class="duty-card">
+        <h2>관심 상품</h2>
+        <p class="muted small">면세점 달러 표시가를 적어두면 적용환율이 바뀔 때마다 어제·오늘·내일 원화가가 자동으로 계산됩니다. 이 브라우저에만 저장됩니다.</p>
+        <form id="dutyItemForm" autocomplete="off">
+          <input id="dutyItemName" class="duty-input" type="text" placeholder="상품명 (선택) 예: 향수 100ml" />
+          <input id="dutyItemUsd" class="duty-input" type="number" step="0.01" min="0" placeholder="면세점가 (달러) 예: 120" required />
+          <input id="dutyItemUrl" class="duty-input" type="url" placeholder="상품 링크 (선택) 면세점 상품 페이지" />
+          <div class="duty-actions">
+            <button type="submit">추가</button>
+            <button type="button" id="dutyItemFetch" class="duty-ghost" hidden>링크에서 가져오기</button>
+          </div>
+        </form>
+        <div id="dutyItemPreview" class="muted small"></div>
+        <div id="dutyItemError" class="error-box" hidden></div>
+        <div class="duty-actions"><button type="button" id="dutyItemsRefreshAll" class="duty-ghost">전체 가격 새로고침</button></div>
+        <div id="dutyItems"></div>
+        <p class="duty-note">
+          <strong>적용환율과 환전 환율은 다릅니다.</strong> 적용환율은 표시가를 원화로 바꾸는 환산율이라 매매기준율 그대로이고 스프레드가 없습니다.
+          은행에서 달러를 사면 매매기준율에 스프레드가 붙고, 카드 결제는 카드사 환율과 수수료가 따로 붙습니다. 결제 수단별 조건은 확인이 필요합니다.
+        </p>
+      </div>
+
+      <div id="dutyWeek"></div>
+
+      <p class="manual-location-hint">* 환율·가격 정보는 참고용이며 실제 결제 금액과 다를 수 있습니다. 상품 가격은 면세점 페이지에서 읽어오며 정가일 수 있으니 확인해 주세요.</p>
+    </section>
+
   </main>
 
   <footer class="app-footer">
@@ -199,6 +231,7 @@
   </footer>
 
   <script src="app.js" defer></script>
+  <script src="dutyfree.js" defer></script>
   <script>
     // 오프라인 캐싱을 위한 서비스워커 등록. 새 버전이 활성화되면(=배포 시 sw.js의
     // CACHE_NAME을 올렸을 때) 한 번 자동 새로고침해서 최신 화면으로 바꿔준다 —
